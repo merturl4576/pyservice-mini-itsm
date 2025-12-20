@@ -203,7 +203,6 @@ This project is open source and available for educational purposes.
 ## 👨‍💻 Author
 
 **Mert Ural**
-- Email: merturl67@gmail.com
 - GitHub: [@merturl4576](https://github.com/merturl4576)
 
 ## 🙏 Acknowledgments
