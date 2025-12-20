@@ -204,7 +204,7 @@ This project is open source and available for educational purposes.
 
 **Mert Ural**
 - Email: merturl67@gmail.com
-- GitHub: [@merturl4567](https://github.com/merturl4567)
+- GitHub: [@merturl4576](https://github.com/merturl4576)
 
 ## 🙏 Acknowledgments
 
