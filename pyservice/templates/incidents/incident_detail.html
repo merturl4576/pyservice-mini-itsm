@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ incident.number }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'incident_list' %}">Incidents</a></li>
+<li class="breadcrumb-item active">{{ incident.number }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title">{{ incident.number }}</h1>
+        <span class="text-muted">Created {{ incident.created_at|date:"M d, Y H:i" }}</span>
+    </div>
+    <div>
+        <a href="{% url 'incident_update' incident.pk %}" class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i> Edit
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>Incident Details
+            </div>
+            <div class="card-body">
+                <h4 class="mb-3">{{ incident.title }}</h4>
+                <p class="text-muted">{{ incident.description|linebreaks }}</p>
+
+                {% if incident.resolution_notes %}
+                <hr>
+                <h6><i class="bi bi-check-circle me-2 text-success"></i>Resolution Notes</h6>
+                <p class="text-muted">{{ incident.resolution_notes|linebreaks }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Status Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-clipboard-data me-2"></i>Status
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted">State</td>
+                        <td>
+                            <span class="badge badge-status state-{{ incident.state }}">
+                                {{ incident.get_state_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Priority</td>
+                        <td>
+                            <span
+                                class="badge badge-status priority-{% if incident.priority == 1 %}critical{% elif incident.priority == 2 %}high{% elif incident.priority == 3 %}medium{% else %}low{% endif %}">
+                                {{ incident.get_priority_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Impact</td>
+                        <td>{{ incident.get_impact_display }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Urgency</td>
+                        <td>{{ incident.get_urgency_display }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- SLA Card -->
+        <div class="card mb-4">
+            <div class="card-header {% if incident.sla_breached %}text-danger{% endif %}">
+                <i class="bi bi-clock me-2"></i>SLA
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted">Due Date</td>
+                        <td>{{ incident.due_date|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Status</td>
+                        <td>
+                            {% if incident.sla_breached %}
+                            <span class="text-danger fw-bold">
+                                <i class="bi bi-exclamation-triangle"></i> BREACHED
+                            </span>
+                            {% else %}
+                            <span class="text-success">
+                                <i class="bi bi-check-circle"></i> Within SLA
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- People Card -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-people me-2"></i>People
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted">Caller</td>
+                        <td>{{ incident.caller.get_full_name|default:incident.caller.username }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Assigned To</td>
+                        <td>{{ incident.assigned_to.get_full_name|default:"Unassigned" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

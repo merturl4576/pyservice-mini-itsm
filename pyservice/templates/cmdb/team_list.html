@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}My Team{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">My Team</li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-people me-2"></i>My Team - {{ user_role }}</h1>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Team Members with Same Role</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Phone</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for teammate in teammates %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                    style="width: 35px; height: 35px;">
+                                    {{ teammate.username|slice:":1"|upper }}
+                                </div>
+                                <span class="fw-medium">{{ teammate.get_full_name|default:teammate.username }}</span>
+                            </div>
+                        </td>
+                        <td>{{ teammate.username }}</td>
+                        <td>{{ teammate.email|default:"-" }}</td>
+                        <td>{% if teammate.department %}{{ teammate.department.name }}{% else %}-{% endif %}</td>
+                        <td>{{ teammate.phone|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-people fs-1 d-block mb-2"></i>
+                            No team members found with the same role
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <small class="text-muted">
+        <i class="bi bi-info-circle me-1"></i>
+        Showing colleagues with the same role as you ({{ user_role }}).
+    </small>
+</div>
+{% endblock %}

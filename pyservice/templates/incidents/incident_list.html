@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}Incidents{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Incidents</li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1 class="page-title">Incidents</h1>
+    <a href="{% url 'incident_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> New Incident
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <select name="state" class="form-select">
+                    <option value="">All States</option>
+                    <option value="new">New</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="needs_help">Needs Help</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="priority" class="form-select">
+                    <option value="">All Priorities</option>
+                    <option value="1">P1 - Critical</option>
+                    <option value="2">P2 - High</option>
+                    <option value="3">P3 - Medium</option>
+                    <option value="4">P4 - Low</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control" placeholder="Search..."
+                    value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-search me-1"></i> Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Incidents Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Number</th>
+                        <th>Title</th>
+                        <th>Priority</th>
+                        <th>State</th>
+                        <th>Location</th>
+                        <th>Caller</th>
+                        <th>Assigned To</th>
+                        <th>SLA</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for incident in incidents %}
+                    <tr
+                        class="{% if incident.state == 'resolved' or incident.state == 'closed' %}table-success{% elif incident.state == 'needs_help' %}table-warning{% endif %}">
+                        <td>
+                            <a href="{% url 'incident_detail' incident.pk %}" class="fw-medium text-decoration-none">
+                                {{ incident.number }}
+                            </a>
+                        </td>
+                        <td>{{ incident.title|truncatechars:30 }}</td>
+                        <td>
+                            <span
+                                class="badge {% if incident.priority == 1 %}bg-danger{% elif incident.priority == 2 %}bg-warning text-dark{% elif incident.priority == 3 %}bg-info{% else %}bg-secondary{% endif %}">
+                                P{{ incident.priority }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if incident.state == 'resolved' or incident.state == 'closed' %}bg-success
+                                {% elif incident.state == 'needs_help' %}bg-warning text-dark
+                                {% elif incident.state == 'in_progress' %}bg-info
+                                {% else %}bg-secondary{% endif %}">
+                                {{ incident.get_state_display }}
+                            </span>
+                        </td>
+                        <td>{{ incident.location|default:"-" }}</td>
+                        <td>{% if incident.caller %}{{ incident.caller.username }}{% else %}-{% endif %}</td>
+                        <td>{% if incident.assigned_to %}{{ incident.assigned_to.username }}{% else %}-{% endif %}</td>
+                        <td>
+                            {% if incident.sla_breached %}
+                            <span class="text-danger"><i class="bi bi-exclamation-circle"></i> Breached</span>
+                            {% else %}
+                            <span class="text-success"><i class="bi bi-check-circle"></i> OK</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'incident_detail' incident.pk %}" class="btn btn-sm btn-outline-primary"
+                                    title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if incident.caller == user or user.role == 'admin' %}
+                                <a href="{% url 'incident_update' incident.pk %}"
+                                    class="btn btn-sm btn-outline-secondary" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% endif %}
+
+                                {% if user.role in 'it_support,technician,admin' %}
+                                {% if incident.state == 'new' or incident.state == 'needs_help' %}
+                                {% if not incident.assigned_to or incident.state == 'needs_help' %}
+                                <form method="post" action="{% url 'incident_claim' incident.pk %}"
+                                    style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success" title="I'll Handle This">
+                                        <i class="bi bi-hand-index"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% endif %}
+
+                                {% if incident.state == 'in_progress' and incident.assigned_to == user %}
+                                <form method="post" action="{% url 'incident_complete' incident.pk %}"
+                                    style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success" title="Mark Resolved">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'incident_escalate' incident.pk %}"
+                                    style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-warning" title="Need Help">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% endif %}
+
+                                {% if user.role == 'admin' %}
+                                <form method="post" action="{% url 'incident_delete' incident.pk %}"
+                                    style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete Incident">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>
+                            No incidents found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="mt-3">
+    <small class="text-muted">
+        <strong>Support Actions:</strong>
+        <span class="badge bg-success"><i class="bi bi-hand-index"></i></span> Claim |
+        <span class="badge bg-success"><i class="bi bi-check-circle"></i></span> Resolve |
+        <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle"></i></span> Need Help |
+        <span class="badge bg-danger"><i class="bi bi-trash"></i></span> Delete (Admin)
+    </small>
+</div>
+
+<!-- Pagination -->
+{% if incidents.has_other_pages %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if incidents.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ incidents.previous_page_number }}">Previous</a>
+        </li>
+        {% endif %}
+        {% for num in incidents.paginator.page_range %}
+        <li class="page-item {% if incidents.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+        </li>
+        {% endfor %}
+        {% if incidents.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ incidents.next_page_number }}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

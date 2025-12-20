@@ -1,0 +1,791 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1 class="page-title">Dashboard</h1>
+    <div>
+        {% if user.role == 'staff' %}
+        <a href="{% url 'request_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> New Service Request
+        </a>
+        {% else %}
+        <a href="{% url 'incident_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> New Incident
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+{% if user.role == 'admin' %}
+<!-- ADMIN DASHBOARD -->
+<!-- Stats Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ open_incidents }}</div>
+                    <div class="stat-label">Open Incidents</div>
+                </div>
+                <i class="bi bi-exclamation-triangle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card danger">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ critical_incidents }}</div>
+                    <div class="stat-label">Critical (P1)</div>
+                </div>
+                <i class="bi bi-fire stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ pending_requests }}</div>
+                    <div class="stat-label">Pending Requests</div>
+                </div>
+                <i class="bi bi-hourglass-split stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ total_assets }}</div>
+                    <div class="stat-label">Total Assets</div>
+                </div>
+                <i class="bi bi-laptop stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Incidents -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-exclamation-triangle me-2"></i>Recent Incidents</span>
+                <a href="{% url 'incident_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for incident in recent_incidents %}
+                    <a href="{% url 'incident_detail' incident.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ incident.number }}</strong>
+                                <p class="mb-1 small">{{ incident.title|truncatechars:40 }}</p>
+                                <span class="badge badge-status state-{{ incident.state }} me-1">{{
+                                    incident.get_state_display }}</span>
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle fs-1 d-block mb-2"></i>
+                        No incidents
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Requests -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-earmark-text me-2"></i>Service Requests</span>
+                <a href="{% url 'request_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for request in recent_requests %}
+                    <a href="{% url 'request_detail' request.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ request.number }}</strong>
+                                <p class="mb-1 small">{{ request.title|truncatechars:40 }}</p>
+                                <span class="badge badge-status state-{{ request.state }} me-1">{{
+                                    request.get_state_display }}</span>
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        No requests
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assets -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-laptop me-2"></i>Recent Assets</span>
+                <a href="{% url 'asset_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for asset in recent_assets %}
+                    <a href="{% url 'asset_detail' asset.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ asset.name }}</strong>
+                                <p class="mb-1 small">{{ asset.get_asset_type_display }}</p>
+                                <span class="badge bg-secondary">{{ asset.get_status_display }}</span>
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-laptop fs-1 d-block mb-2"></i>
+                        No assets
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif user.role == 'staff' %}
+<!-- STAFF DASHBOARD -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ open_requests_count }}</div>
+                    <div class="stat-label">My Open Requests</div>
+                </div>
+                <i class="bi bi-file-earmark-text stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ active_assets_count }}</div>
+                    <div class="stat-label">My Active Assets</div>
+                </div>
+                <i class="bi bi-laptop stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- My Service Requests -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-file-earmark-text me-2"></i>My Service Requests
+            </div>
+            <div class="card-body p-0">
+                {% if my_open_requests %}
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item bg-light"><strong>Active Requests</strong></div>
+                    {% for request in my_open_requests %}
+                    <a href="{% url 'request_detail' request.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ request.number }}</strong>
+                                <p class="mb-1 small">{{ request.title|truncatechars:40 }}</p>
+                                <small class="text-muted">{{ request.created_at|date:"M d, Y" }}</small>
+                            </div>
+                            <span class="badge badge-status state-{{ request.state }}">{{ request.get_state_display
+                                }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if my_resolved_requests %}
+                <div class="list-group list-group-flush mt-3">
+                    <div class="list-group-item bg-light"><strong>Recently Resolved</strong></div>
+                    {% for request in my_resolved_requests %}
+                    <a href="{% url 'request_detail' request.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i><strong class="text-muted">{{
+                                    request.number }}</strong>
+                                <p class="mb-1 small text-muted">{{ request.title|truncatechars:40 }}</p>
+                                <small class="text-muted">{{ request.updated_at|date:"M d, Y" }}</small>
+                            </div>
+                            <span class="badge bg-success">{{ request.get_state_display }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if not my_open_requests and not my_resolved_requests %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    No service requests
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- My Assets -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-laptop me-2"></i>My Assets
+            </div>
+            <div class="card-body p-0">
+                {% if my_active_assets %}
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item bg-light"><strong>Active Assets</strong></div>
+                    {% for asset in my_active_assets %}
+                    <a href="{% url 'asset_detail' asset.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ asset.name }}</strong>
+                                <p class="mb-1 small">{{ asset.get_asset_type_display }}</p>
+                                <small class="text-muted">Serial: {{ asset.serial_number|default:"N/A" }}</small>
+                            </div>
+                            <span class="badge bg-primary">{{ asset.get_status_display }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if my_retired_assets %}
+                <div class="list-group list-group-flush mt-3">
+                    <div class="list-group-item bg-light"><strong>Retired Assets</strong></div>
+                    {% for asset in my_retired_assets %}
+                    <a href="{% url 'asset_detail' asset.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong class="text-muted">{{ asset.name }}</strong>
+                                <p class="mb-1 small text-muted">{{ asset.get_asset_type_display }}</p>
+                            </div>
+                            <span class="badge bg-secondary">Retired</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if not my_active_assets and not my_retired_assets %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-laptop fs-1 d-block mb-2"></i>
+                    No assigned assets
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif user.role == 'it_support' %}
+<!-- IT SUPPORT DASHBOARD -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="stat-card danger">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ active_incidents_count }}</div>
+                    <div class="stat-label">Active Incidents</div>
+                </div>
+                <i class="bi bi-exclamation-triangle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ active_assets_count }}</div>
+                    <div class="stat-label">Assets Under Review</div>
+                </div>
+                <i class="bi bi-laptop stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- My Incidents -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-exclamation-triangle me-2"></i>My Incidents
+            </div>
+            <div class="card-body p-0">
+                {% if active_incidents %}
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item bg-light"><strong>Active / In Progress</strong></div>
+                    {% for incident in active_incidents %}
+                    <a href="{% url 'incident_detail' incident.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ incident.number }}</strong>
+                                <p class="mb-1 small">{{ incident.title|truncatechars:40 }}</p>
+                                <span
+                                    class="badge badge-status priority-{% if incident.priority == 1 %}critical{% elif incident.priority == 2 %}high{% elif incident.priority == 3 %}medium{% else %}low{% endif %} me-1">{{
+                                    incident.get_priority_display }}</span>
+                            </div>
+                            <span class="badge badge-status state-{{ incident.state }}">{{ incident.get_state_display
+                                }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if resolved_incidents %}
+                <div class="list-group list-group-flush mt-3">
+                    <div class="list-group-item bg-light"><strong>Recently Resolved</strong></div>
+                    {% for incident in resolved_incidents %}
+                    <a href="{% url 'incident_detail' incident.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i><strong class="text-muted">{{
+                                    incident.number }}</strong>
+                                <p class="mb-1 small text-muted">{{ incident.title|truncatechars:40 }}</p>
+                                <small class="text-muted">{{ incident.updated_at|date:"M d, Y" }}</small>
+                            </div>
+                            <span class="badge bg-success">{{ incident.get_state_display }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if not active_incidents and not resolved_incidents %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-check-circle fs-1 d-block mb-2"></i>
+                    No assigned incidents
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Assets Needing Attention -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-laptop me-2"></i>Assets Status
+            </div>
+            <div class="card-body p-0">
+                {% if active_assets %}
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item bg-light"><strong>Needs Attention</strong></div>
+                    {% for asset in active_assets %}
+                    <a href="{% url 'asset_detail' asset.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ asset.name }}</strong>
+                                <p class="mb-1 small">{{ asset.get_asset_type_display }}</p>
+                                <small class="text-muted">Assigned: {{
+                                    asset.assigned_to.get_full_name|default:"Unassigned" }}</small>
+                            </div>
+                            <span class="badge bg-warning text-dark">{{ asset.get_status_display }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if resolved_assets %}
+                <div class="list-group list-group-flush mt-3">
+                    <div class="list-group-item bg-light"><strong>Recently Processed</strong></div>
+                    {% for asset in resolved_assets %}
+                    <a href="{% url 'asset_detail' asset.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ asset.name }}</strong>
+                                <p class="mb-1 small text-muted">{{ asset.get_asset_type_display }}</p>
+                            </div>
+                            <span class="badge bg-success">{{ asset.get_status_display }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if not active_assets and not resolved_assets %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-laptop fs-1 d-block mb-2"></i>
+                    No assets to review
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif user.role == 'technician' %}
+<!-- TECHNICIAN DASHBOARD -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ unassigned_count }}</div>
+                    <div class="stat-label">New Tasks Available</div>
+                </div>
+                <i class="bi bi-inbox stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ active_count }}</div>
+                    <div class="stat-label">My Active Tasks</div>
+                </div>
+                <i class="bi bi-tools stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Available Tasks (Unassigned) -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <i class="bi bi-inbox me-2"></i>Available Tasks - I'll Handle This!
+            </div>
+            <div class="card-body p-0">
+                {% if unassigned_incidents or unassigned_requests %}
+                <div class="list-group list-group-flush">
+                    {% if unassigned_incidents %}
+                    <div class="list-group-item bg-light"><strong>Unassigned Incidents</strong></div>
+                    {% for incident in unassigned_incidents %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <a href="{% url 'incident_detail' incident.pk %}"
+                                    class="text-decoration-none fw-medium d-block">{{ incident.number }}</a>
+                                <p class="mb-1 small">{{ incident.title|truncatechars:40 }}</p>
+                                <span
+                                    class="badge badge-status priority-{% if incident.priority == 1 %}critical{% elif incident.priority == 2 %}high{% elif incident.priority == 3 %}medium{% else %}low{% endif %} me-1">{{
+                                    incident.get_priority_display }}</span>
+                            </div>
+                            <form method="post" action="{% url 'incident_detail' incident.pk %}"
+                                style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="claim">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="bi bi-hand-thumbs-up"></i> I'll Handle This
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if unassigned_requests %}
+                    <div class="list-group-item bg-light mt-2"><strong>Unassigned Requests</strong></div>
+                    {% for request in unassigned_requests %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <a href="{% url 'request_detail' request.pk %}"
+                                    class="text-decoration-none fw-medium d-block">{{ request.number }}</a>
+                                <p class="mb-1 small">{{ request.title|truncatechars:40 }}</p>
+                                <small class="text-muted">{{ request.created_at|date:"M d, Y" }}</small>
+                            </div>
+                            <form method="post" action="{% url 'request_detail' request.pk %}" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="claim">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="bi bi-hand-thumbs-up"></i> I'll Handle This
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-check-circle-fill text-success fs-1 d-block mb-2"></i>
+                    No new tasks available
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- My Active Tasks -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-tools me-2"></i>My Active Tasks
+            </div>
+            <div class="card-body p-0">
+                {% if my_active_incidents or my_active_requests %}
+                <div class="list-group list-group-flush">
+                    {% if my_active_incidents %}
+                    <div class="list-group-item bg-light"><strong>Active Incidents</strong></div>
+                    {% for incident in my_active_incidents %}
+                    <a href="{% url 'incident_detail' incident.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ incident.number }}</strong>
+                                <p class="mb-1 small">{{ incident.title|truncatechars:40 }}</p>
+                                <span
+                                    class="badge badge-status priority-{% if incident.priority == 1 %}critical{% elif incident.priority == 2 %}high{% elif incident.priority == 3 %}medium{% else %}low{% endif %} me-1">{{
+                                    incident.get_priority_display }}</span>
+                            </div>
+                            <span class="badge badge-status state-{{ incident.state }}">{{ incident.get_state_display
+                                }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if my_active_requests %}
+                    <div class="list-group-item bg-light mt-2"><strong>Active Requests</strong></div>
+                    {% for request in my_active_requests %}
+                    <a href="{% url 'request_detail' request.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ request.number }}</strong>
+                                <p class="mb-1 small">{{ request.title|truncatechars:40 }}</p>
+                                <small class="text-muted">{{ request.created_at|date:"M d, Y" }}</small>
+                            </div>
+                            <span class="badge badge-status state-{{ request.state }}">{{ request.get_state_display
+                                }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    No active tasks
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Completed Tasks -->
+        <div class="card mt-4">
+            <div class="card-header bg-success text-white">
+                <i class="bi bi-check-circle-fill me-2"></i>Recently Completed
+            </div>
+            <div class="card-body p-0">
+                {% if my_resolved_incidents or my_resolved_requests %}
+                <div class="list-group list-group-flush">
+                    {% for incident in my_resolved_incidents %}
+                    <a href="{% url 'incident_detail' incident.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong class="text-muted">{{ incident.number }}</strong>
+                                <p class="mb-0 small text-muted">{{ incident.title|truncatechars:35 }}</p>
+                            </div>
+                            <small class="text-muted">{{ incident.resolved_at|date:"M d" }}</small>
+                        </div>
+                    </a>
+                    {% endfor %}
+                    {% for request in my_resolved_requests %}
+                    <a href="{% url 'request_detail' request.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong class="text-muted">{{ request.number }}</strong>
+                                <p class="mb-0 small text-muted">{{ request.title|truncatechars:35 }}</p>
+                            </div>
+                            <small class="text-muted">{{ request.completed_at|date:"M d" }}</small>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    No completed tasks yet
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- DEFAULT DASHBOARD FOR OTHER ROLES -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ open_incidents }}</div>
+                    <div class="stat-label">Open Incidents</div>
+                </div>
+                <i class="bi bi-exclamation-triangle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card danger">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ critical_incidents }}</div>
+                    <div class="stat-label">Critical (P1)</div>
+                </div>
+                <i class="bi bi-fire stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ pending_requests }}</div>
+                    <div class="stat-label">Pending Requests</div>
+                </div>
+                <i class="bi bi-hourglass-split stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ total_assets }}</div>
+                    <div class="stat-label">Total Assets</div>
+                </div>
+                <i class="bi bi-laptop stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-exclamation-triangle me-2"></i>Recent Incidents</span>
+                <a href="{% url 'incident_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Number</th>
+                                <th>Title</th>
+                                <th>Priority</th>
+                                <th>State</th>
+                                <th>Assigned To</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for incident in recent_incidents %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'incident_detail' incident.pk %}"
+                                        class="text-decoration-none fw-medium">
+                                        {{ incident.number }}
+                                    </a>
+                                </td>
+                                <td>{{ incident.title|truncatechars:40 }}</td>
+                                <td>
+                                    <span
+                                        class="badge badge-status priority-{% if incident.priority == 1 %}critical{% elif incident.priority == 2 %}high{% elif incident.priority == 3 %}medium{% else %}low{% endif %}">
+                                        {{ incident.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-status state-{{ incident.state }}">
+                                        {{ incident.get_state_display }}
+                                    </span>
+                                </td>
+                                <td>{{ incident.assigned_to.get_full_name|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="bi bi-check-circle fs-1 d-block mb-2"></i>
+                                    No incidents found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history me-2"></i>Pending Approvals
+            </div>
+            <div class="card-body">
+                {% for request in pending_approval_requests %}
+                <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                    <div class="flex-grow-1">
+                        <a href="{% url 'request_detail' request.pk %}" class="text-decoration-none fw-medium d-block">
+                            {{ request.number }}
+                        </a>
+                        <small class="text-muted">{{ request.title|truncatechars:30 }}</small>
+                    </div>
+                    <span class="badge bg-warning text-dark">Awaiting</span>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    No pending approvals
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header text-danger">
+                <i class="bi bi-alarm me-2"></i>SLA Breached
+            </div>
+            <div class="card-body">
+                {% for incident in sla_breached_incidents %}
+                <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                    <div class="flex-grow-1">
+                        <a href="{% url 'incident_detail' incident.pk %}"
+                            class="text-decoration-none fw-medium d-block text-danger">
+                            {{ incident.number }}
+                        </a>
+                        <small class="text-muted">{{ incident.title|truncatechars:25 }}</small>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-check-circle text-success fs-1 d-block mb-2"></i>
+                    All within SLA
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

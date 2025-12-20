@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}{% if form.instance.pk %}Edit{% else %}New{% endif %} Incident{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'incident_list' %}">Incidents</a></li>
+<li class="breadcrumb-item active">{% if form.instance.pk %}Edit{% else %}New{% endif %}</li>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">{% if form.instance.pk %}Edit Incident{% else %}New Incident{% endif %}</h1>
+</div>
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-4">
+                <div class="col-md-12">
+                    <label class="form-label">Title <span class="text-danger">*</span></label>
+                    {{ form.title }}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Description <span class="text-danger">*</span></label>
+                    {{ form.description }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Location</label>
+                    {{ form.location }}
+                    <small class="text-muted">Where is the caller located? (e.g., Building A, Floor 3)</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Caller <span class="text-danger">*</span></label>
+                    {% if is_admin %}
+                    {{ form.caller }}
+                    {% else %}
+                    <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                    <input type="hidden" name="caller" value="{{ user.pk }}">
+                    <small class="text-muted">Incident will be reported by you</small>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Impact</label>
+                    {{ form.impact }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Urgency</label>
+                    {{ form.urgency }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">State</label>
+                    {{ form.state }}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Resolution Notes</label>
+                    {{ form.resolution_notes }}
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> {% if form.instance.pk %}Update{% else %}Create{% endif %}
+                    Incident
+                </button>
+                <a href="{% url 'incident_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

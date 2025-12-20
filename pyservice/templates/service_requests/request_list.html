@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Service Requests{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Service Requests</li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1 class="page-title">Service Requests</h1>
+    <a href="{% url 'request_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> New Request
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Number</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Location</th>
+                        <th>State</th>
+                        <th>Requester</th>
+                        <th>Assigned To</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                    <tr
+                        class="{% if req.state == 'completed' %}table-success{% elif req.state == 'needs_help' %}table-warning{% endif %}">
+                        <td>
+                            <a href="{% url 'request_detail' req.pk %}" class="fw-medium text-decoration-none">
+                                {{ req.number }}
+                            </a>
+                        </td>
+                        <td>{{ req.title|truncatechars:30 }}</td>
+                        <td>{{ req.get_request_type_display }}</td>
+                        <td>{{ req.location|default:"-" }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if req.state == 'completed' %}bg-success
+                                {% elif req.state == 'rejected' or req.state == 'cancelled' %}bg-danger
+                                {% elif req.state == 'needs_help' %}bg-warning text-dark
+                                {% elif req.state == 'in_progress' %}bg-info
+                                {% elif req.state == 'approved' or req.state == 'assigned' %}bg-primary
+                                {% else %}bg-secondary{% endif %}">
+                                {{ req.get_state_display }}
+                            </span>
+                        </td>
+                        <td>{% if req.requester %}{{ req.requester.username }}{% else %}-{% endif %}</td>
+                        <td>{% if req.assigned_to %}{{ req.assigned_to.username }}{% else %}-{% endif %}</td>
+                        <td>{{ req.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'request_detail' req.pk %}" class="btn btn-sm btn-outline-primary"
+                                    title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if req.requester == user or user.role == 'admin' %}
+                                <a href="{% url 'request_update' req.pk %}" class="btn btn-sm btn-outline-secondary"
+                                    title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% endif %}
+
+                                {% if user.role in 'it_support,technician,admin' %}
+                                {% if req.state == 'draft' or req.state == 'approved' or req.state == 'needs_help' %}
+                                {% if not req.assigned_to or req.state == 'needs_help' %}
+                                <form method="post" action="{% url 'request_claim' req.pk %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success" title="I'll Handle This">
+                                        <i class="bi bi-hand-index"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% endif %}
+
+                                {% if req.state == 'in_progress' and req.assigned_to == user %}
+                                <form method="post" action="{% url 'request_complete' req.pk %}"
+                                    style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success" title="Mark Complete">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'request_escalate' req.pk %}"
+                                    style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-warning" title="Need Help">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% endif %}
+
+                                {% if user.role == 'admin' %}
+                                <form method="post" action="{% url 'request_delete' req.pk %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete Request">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="bi bi-file-earmark-text fs-1 d-block mb-2"></i>
+                            No service requests found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="mt-3">
+    <small class="text-muted">
+        <strong>Support Actions:</strong>
+        <span class="badge bg-success"><i class="bi bi-hand-index"></i></span> Claim Request |
+        <span class="badge bg-success"><i class="bi bi-check-circle"></i></span> Complete |
+        <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle"></i></span> Need Advanced Help
+    </small>
+</div>
+{% endblock %}

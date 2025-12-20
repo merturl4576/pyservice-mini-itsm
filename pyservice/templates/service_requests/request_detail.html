@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ request_obj.number }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'request_list' %}">Service Requests</a></li>
+<li class="breadcrumb-item active">{{ request_obj.number }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title">{{ request_obj.number }}</h1>
+        <span class="text-muted">Created {{ request_obj.created_at|date:"M d, Y H:i" }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        {% if request_obj.state == 'draft' %}
+        <form method="post" action="{% url 'request_submit' request_obj.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-send me-1"></i> Submit for Approval
+            </button>
+        </form>
+        {% endif %}
+        {% if request_obj.state == 'awaiting_approval' %}
+        <form method="post" action="{% url 'request_approve' request_obj.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-lg me-1"></i> Approve
+            </button>
+        </form>
+        <form method="post" action="{% url 'request_reject' request_obj.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-x-lg me-1"></i> Reject
+            </button>
+        </form>
+        {% endif %}
+        <a href="{% url 'request_update' request_obj.pk %}" class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i> Edit
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-file-earmark-text me-2"></i>Request Details
+            </div>
+            <div class="card-body">
+                <h4 class="mb-3">{{ request_obj.title }}</h4>
+                <p class="text-muted">{{ request_obj.description|linebreaks }}</p>
+
+                {% if request_obj.approval_notes %}
+                <hr>
+                <h6>Approval Notes</h6>
+                <p class="text-muted">{{ request_obj.approval_notes|linebreaks }}</p>
+                {% endif %}
+
+                {% if request_obj.fulfillment_notes %}
+                <hr>
+                <h6>Fulfillment Notes</h6>
+                <p class="text-muted">{{ request_obj.fulfillment_notes|linebreaks }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-clipboard-data me-2"></i>Status
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted">State</td>
+                        <td>
+                            <span
+                                class="badge {% if request_obj.state == 'completed' %}bg-success{% elif request_obj.state == 'rejected' or request_obj.state == 'cancelled' %}bg-danger{% elif request_obj.state == 'awaiting_approval' %}bg-warning text-dark{% elif request_obj.state == 'approved' or request_obj.state == 'assigned' %}bg-info{% else %}bg-secondary{% endif %}">
+                                {{ request_obj.get_state_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Type</td>
+                        <td>{{ request_obj.get_request_type_display }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-people me-2"></i>People
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted">Requester</td>
+                        <td>{{ request_obj.requester.get_full_name|default:request_obj.requester.username }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Approver</td>
+                        <td>{{ request_obj.approver.get_full_name|default:"Not set" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Assigned To</td>
+                        <td>{{ request_obj.assigned_to.get_full_name|default:"Unassigned" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

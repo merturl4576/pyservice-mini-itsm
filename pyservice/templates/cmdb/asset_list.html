@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Assets{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Assets</li>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1 class="page-title">Assets</h1>
+    <a href="{% url 'asset_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Request Asset
+    </a>
+</div>
+
+<!-- Company Inventory Table -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Company Inventory</h5>
+        {% if user.role == 'admin' %}
+        <a href="{% url 'inventory_edit' %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-pencil me-1"></i> Edit Inventory
+        </a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for item in inventory %}
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div
+                    class="border rounded p-3 text-center {% if item.quantity == 0 %}bg-danger bg-opacity-10{% elif item.quantity < 5 %}bg-warning bg-opacity-10{% else %}bg-success bg-opacity-10{% endif %}">
+                    <h3
+                        class="mb-1 {% if item.quantity == 0 %}text-danger{% elif item.quantity < 5 %}text-warning{% else %}text-success{% endif %}">
+                        {{ item.quantity }}</h3>
+                    <small class="text-muted">{{ item.get_item_type_display }}</small>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center text-muted">
+                No inventory data
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Assets Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Serial Number</th>
+                        <th>Status</th>
+                        <th>Assigned To</th>
+                        <th>Location</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for asset in assets %}
+                    <tr
+                        class="{% if asset.status == 'under_review' %}table-warning{% elif asset.status == 'declined' %}table-danger{% endif %}">
+                        <td>
+                            <a href="{% url 'asset_detail' asset.pk %}" class="fw-medium text-decoration-none">
+                                {{ asset.name }}
+                            </a>
+                        </td>
+                        <td>{{ asset.get_asset_type_display }}</td>
+                        <td><code>{{ asset.serial_number }}</code></td>
+                        <td>
+                            <span class="badge 
+                                {% if asset.status == 'assigned' %}bg-success
+                                {% elif asset.status == 'under_review' %}bg-warning text-dark
+                                {% elif asset.status == 'declined' %}bg-danger
+                                {% elif asset.status == 'in_stock' %}bg-info
+                                {% elif asset.status == 'in_repair' %}bg-secondary
+                                {% else %}bg-dark{% endif %}">
+                                {{ asset.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{% if asset.assigned_to %}{{ asset.assigned_to.username }}{% else %}-{% endif %}</td>
+                        <td>{{ asset.location|default:"-" }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'asset_detail' asset.pk %}" class="btn btn-sm btn-outline-primary"
+                                    title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if asset.created_by == user or user.role == 'admin' %}
+                                <a href="{% url 'asset_update' asset.pk %}" class="btn btn-sm btn-outline-secondary"
+                                    title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% endif %}
+
+                                {% if user.role == 'admin' and asset.status == 'under_review' %}
+                                <form method="post" action="{% url 'asset_approve' asset.pk %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success" title="Approve">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'asset_decline' asset.pk %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Decline">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                {% if user.role == 'admin' %}
+                                <form method="post" action="{% url 'asset_delete' asset.pk %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-box fs-1 d-block mb-2"></i>
+                            No assets found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="mt-3">
+    <small class="text-muted">
+        <strong>Admin Actions:</strong>
+        <span class="badge bg-success"><i class="bi bi-check-lg"></i></span> Approve |
+        <span class="badge bg-danger"><i class="bi bi-x-lg"></i></span> Decline |
+        <span class="badge bg-danger"><i class="bi bi-trash"></i></span> Delete
+    </small>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+hocanin istekleri ve proje: python hocamiz soyle bir proje verdi:  hocaya github verilecek flask django gibi frameworklerde web app proje yapilacak data storage kullanilacak sql tercihen konu herhangi birsey olabilir
+
+benim istedigim proje: Act as a Senior Django Architect and DevOps Engineer. We are building a "Mini-ITSM Platform" called "PyService" that mimics the core functionality of ServiceNow but using Python/Django.
+
+The goal is to build an ITIL-compliant system to be used as a portfolio project, demonstrating knowledge of CMDB, SLAs, and Workflows.
+
+### Tech Stack
+- **Backend:** Python, Django
+- **Database:** PostgreSQL (Assume local setup for now, provide models compatible with Postgres)
+- **API:** Django REST Framework (DRF)
+- **Frontend:** Bootstrap 5 (Responsive, clean enterprise look)
+- **Task Queue (Optional but planned):** Celery (Keep architecture ready for this)
+
+### Core Modules & Requirements
+
+1. **CMDB (Asset Management) Module**
+   - **Models:** `Department`, `User` (extend AbstractUser), `Asset` (Laptop, Monitor, etc.).
+   - **Relationships:**
+     - Users belong to a Department.
+     - Assets are assigned to Users (One-to-Many).
+     - Assets have status (In Stock, Assigned, Retired, In Repair).
+   - **Logic:** When a User is created, if their role is 'Staff', the system should suggest available 'In Stock' assets.
+
+2. **Incident Management Module (ITIL Focused)**
+   - **Model:** `Incident`
+   - **Fields:** Title, Description, Caller (User FK), Assigned to (IT Staff FK), Impact, Urgency, Priority (Calculated), State (New, In Progress, Resolved, Closed).
+   - **SLA Logic:** Add a method or signal that calculates a `due_date` based on Priority.
+     - Critical = 4 hours
+     - High = 24 hours
+     - Low = 48 hours.
+
+3. **Service Request Module (Workflow Focused)**
+   - **Model:** `ServiceRequest` (e.g., Request for new software).
+   - **Workflow:**
+     - State starts at 'Draft'.
+     - When submitted -> State becomes 'Awaiting Approval'.
+     - If Manager approves -> State becomes 'Assigned' (Sent to IT).
+     - If Rejected -> State becomes 'Closed/Skipped'.
+
+4. **API (Integration)**
+   - Create `serializers.py` and `views.py` using ViewSets for Incident and Asset models.
+   - Ensure standard CRUD operations are available via JSON.
+
+### Task for You
+Please start by generating the **folder structure** and the **`models.py`** code for these modules.
+- Use best practices for field naming (snake_case).
+- Use `django.utils.timezone` for dates.
+- Add specific methods in the `Incident` model to calculate Priority matrix (Impact + Urgency = Priority) and the SLA deadline.
+- Add comments explaining the "ITIL logic" in the code (e.g., "Calculating SLA based on priority").
+
+After the models, please provide the **`admin.py`** configuration to manage these easily.
