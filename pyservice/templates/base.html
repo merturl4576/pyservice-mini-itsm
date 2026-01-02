@@ -12,6 +12,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- FullCalendar -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
     <style>
         :root {
@@ -375,6 +380,18 @@
                     <i class="bi bi-speedometer2"></i> Dashboard
                 </a>
             </li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'calendar' %}"
+                    class="sidebar-nav-link {% if 'calendar' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-calendar-event"></i> Calendar
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'selfservice' %}"
+                    class="sidebar-nav-link {% if 'selfservice' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-shop-window"></i> Self-Service
+                </a>
+            </li>
 
             <li class="sidebar-section">ITSM Modules</li>
 
@@ -388,6 +405,12 @@
                 <a href="{% url 'request_list' %}"
                     class="sidebar-nav-link {% if 'request' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-file-earmark-text"></i> Service Requests
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'kb_article_list' %}"
+                    class="sidebar-nav-link {% if 'knowledge' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-book"></i> Knowledge Base
                 </a>
             </li>
 
@@ -406,6 +429,38 @@
                     {% if user.role == 'admin' %}Departments{% else %}My Team{% endif %}
                 </a>
             </li>
+
+            {% if user.role == 'admin' or user.role == 'manager' %}
+            <li class="sidebar-section">Reporting</li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'reports_dashboard' %}"
+                    class="sidebar-nav-link {% if 'reports' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-bar-chart"></i> Reports
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'sla_dashboard' %}"
+                    class="sidebar-nav-link {% if 'sla' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-activity"></i> SLA Dashboard
+                </a>
+            </li>
+            {% endif %}
+
+            {% if user.role == 'admin' %}
+            <li class="sidebar-section">Admin Tools</li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'staff_leaderboard' %}"
+                    class="sidebar-nav-link {% if 'leaderboard' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-trophy"></i> Staff Leaderboard
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'activity_log' %}"
+                    class="sidebar-nav-link {% if 'activity' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-journal-text"></i> Activity Logs
+                </a>
+            </li>
+            {% endif %}
 
             <li class="sidebar-section">Account</li>
 
@@ -435,6 +490,61 @@
                         {% block breadcrumb %}{% endblock %}
                     </ol>
                 </nav>
+            </div>
+
+            <!-- Search & Notifications -->
+            <div class="d-flex align-items-center gap-3 ms-auto me-4">
+                <!-- Global Search -->
+                <form action="{% url 'global_search' %}" method="get" class="d-none d-md-flex">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i
+                                class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="Search..."
+                            aria-label="Search" style="width: 200px;">
+                    </div>
+                </form>
+
+                <!-- Notifications -->
+                <div class="dropdown">
+                    <button class="btn btn-light position-relative rounded-circle p-2" type="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-bell fs-5"></i>
+                        <span id="notification-badge"
+                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {% if unread_notifications_count == 0 %}d-none{% endif %}">
+                            {{ unread_notifications_count }}
+                        </span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-0 shadow-lg border-0"
+                        style="width: 320px; max-height: 400px; overflow-y: auto;">
+                        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                            <span class="fw-bold">Notifications</span>
+                            <a href="#" class="small text-decoration-none" onclick="markAllRead(event)">Mark all
+                                read</a>
+                        </div>
+                        <div id="notification-list">
+                            {% for notif in recent_notifications %}
+                            <a href="{{ notif.link }}"
+                                class="dropdown-item p-3 border-bottom {% if not notif.is_read %}bg-light{% endif %}">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="fw-bold text-primary">{{ notif.title }}</small>
+                                    <small class="text-muted" style="font-size: 0.7rem;">{{ notif.created_at|date:"M d,
+                                        H:i" }}</small>
+                                </div>
+                                <p class="mb-0 small text-muted text-truncate">{{ notif.message }}</p>
+                            </a>
+                            {% empty %}
+                            <div class="p-4 text-center text-muted small">
+                                <i class="bi bi-bell-slash fs-4 d-block mb-2"></i>
+                                No notifications
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="p-2 text-center border-top bg-light">
+                            <a href="{% url 'notification_list' %}" class="small text-decoration-none fw-bold">View All
+                                Notifications</a>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="user-dropdown dropdown">
                 <div data-bs-toggle="dropdown" aria-expanded="false">
@@ -479,6 +589,56 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Notification Logic
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function markAllRead(e) {
+            e.preventDefault();
+            fetch('/notifications/mark-all-read/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            }).then(() => {
+                const badge = document.getElementById('notification-badge');
+                if (badge) badge.classList.add('d-none');
+                window.location.reload();
+            });
+        }
+
+        // Poll for notifications every 60 seconds
+        setInterval(function () {
+            fetch('/notifications/api/')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notification-badge');
+                    if (badge) {
+                        if (data.unread_count > 0) {
+                            badge.textContent = data.unread_count;
+                            badge.classList.remove('d-none');
+                        } else {
+                            badge.classList.add('d-none');
+                        }
+                    }
+                })
+                .catch(err => console.error('Notification polling error:', err));
+        }, 60000);
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 

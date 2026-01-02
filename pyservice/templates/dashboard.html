@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block title %}Dashboard{% endblock %}
 
@@ -68,6 +68,47 @@
     </div>
 </div>
 
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pie-chart me-2"></i>Incident Status Distribution
+            </div>
+            <div class="card-body">
+                <canvas id="incidentStatesChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-graph-up me-2"></i>Monthly Trend
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyTrendChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-speedometer2 me-2"></i>SLA Compliance
+            </div>
+            <div class="card-body text-center">
+                <canvas id="slaComplianceChart" height="180"></canvas>
+                <div class="mt-2">
+                    <span
+                        class="fs-3 fw-bold text-{% if sla_compliance_pct >= 90 %}success{% elif sla_compliance_pct >= 70 %}warning{% else %}danger{% endif %}">
+                        {{ sla_compliance_pct }}%
+                    </span>
+                    <small class="text-muted d-block">Compliance Rate</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4">
     <!-- Recent Incidents -->
     <div class="col-lg-4">
@@ -84,8 +125,7 @@
                             <div class="flex-grow-1">
                                 <strong>{{ incident.number }}</strong>
                                 <p class="mb-1 small">{{ incident.title|truncatechars:40 }}</p>
-                                <span class="badge badge-status state-{{ incident.state }} me-1">{{
-                                    incident.get_state_display }}</span>
+                                <span class="badge badge-status state-{{ incident.state }} me-1">{{ incident.get_state_display }}</span>
                             </div>
                         </div>
                     </a>
@@ -115,8 +155,7 @@
                             <div class="flex-grow-1">
                                 <strong>{{ request.number }}</strong>
                                 <p class="mb-1 small">{{ request.title|truncatechars:40 }}</p>
-                                <span class="badge badge-status state-{{ request.state }} me-1">{{
-                                    request.get_state_display }}</span>
+                                <span class="badge badge-status state-{{ request.state }} me-1">{{ request.get_state_display }}</span>
                             </div>
                         </div>
                     </a>
@@ -208,8 +247,7 @@
                                 <p class="mb-1 small">{{ request.title|truncatechars:40 }}</p>
                                 <small class="text-muted">{{ request.created_at|date:"M d, Y" }}</small>
                             </div>
-                            <span class="badge badge-status state-{{ request.state }}">{{ request.get_state_display
-                                }}</span>
+                            <span class="badge badge-status state-{{ request.state }}">{{ request.get_state_display }}</span>
                         </div>
                     </a>
                     {% endfor %}
@@ -346,8 +384,7 @@
                                     class="badge badge-status priority-{% if incident.priority == 1 %}critical{% elif incident.priority == 2 %}high{% elif incident.priority == 3 %}medium{% else %}low{% endif %} me-1">{{
                                     incident.get_priority_display }}</span>
                             </div>
-                            <span class="badge badge-status state-{{ incident.state }}">{{ incident.get_state_display
-                                }}</span>
+                            <span class="badge badge-status state-{{ incident.state }}">{{ incident.get_state_display }}</span>
                         </div>
                     </a>
                     {% endfor %}
@@ -554,8 +591,7 @@
                                     class="badge badge-status priority-{% if incident.priority == 1 %}critical{% elif incident.priority == 2 %}high{% elif incident.priority == 3 %}medium{% else %}low{% endif %} me-1">{{
                                     incident.get_priority_display }}</span>
                             </div>
-                            <span class="badge badge-status state-{{ incident.state }}">{{ incident.get_state_display
-                                }}</span>
+                            <span class="badge badge-status state-{{ incident.state }}">{{ incident.get_state_display }}</span>
                         </div>
                     </a>
                     {% endfor %}
@@ -571,8 +607,7 @@
                                 <p class="mb-1 small">{{ request.title|truncatechars:40 }}</p>
                                 <small class="text-muted">{{ request.created_at|date:"M d, Y" }}</small>
                             </div>
-                            <span class="badge badge-status state-{{ request.state }}">{{ request.get_state_display
-                                }}</span>
+                            <span class="badge badge-status state-{{ request.state }}">{{ request.get_state_display }}</span>
                         </div>
                     </a>
                     {% endfor %}
@@ -788,4 +823,103 @@
     </div>
 </div>
 {% endif %}
+
+{% if user.role == 'admin' %}
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Chart 1: Incident States Distribution (Pie)
+        const statesData = {{ chart_incident_states|safe }};
+    if (statesData && document.getElementById('incidentStatesChart')) {
+        new Chart(document.getElementById('incidentStatesChart'), {
+            type: 'pie',
+            data: {
+                labels: statesData.labels,
+                datasets: [{
+                    data: statesData.data,
+                    backgroundColor: statesData.colors,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 15, font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // Chart 2: Monthly Trend (Line)
+    const trendData = {{ chart_monthly_trend|safe }};
+    if (trendData && document.getElementById('monthlyTrendChart')) {
+        new Chart(document.getElementById('monthlyTrendChart'), {
+            type: 'line',
+            data: {
+                labels: trendData.labels,
+                datasets: [
+                    {
+                        label: 'Incidents',
+                        data: trendData.incidents,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Requests',
+                        data: trendData.requests,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // Chart 3: SLA Compliance (Doughnut)
+    const slaData = {{ chart_sla_compliance|safe }};
+    if (slaData && document.getElementById('slaComplianceChart')) {
+        new Chart(document.getElementById('slaComplianceChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Compliant', 'Breached'],
+                datasets: [{
+                    data: [slaData.compliant, slaData.breached],
+                    backgroundColor: ['#10b981', '#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
+{% endif %}
+{% endblock %}
+
+
+
+

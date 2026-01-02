@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Reports</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="card-title mb-0">Total Incidents</h6>
+                        <h2 class="my-2 display-6 fw-bold">{{ total_incidents }}</h2>
+                        <small>{{ open_incidents }} Open</small>
+                    </div>
+                    <i class="bi bi-exclamation-triangle fs-1 opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-white bg-opacity-10 border-0">
+                <a href="{% url 'export_incidents' %}"
+                    class="text-white text-decoration-none d-flex justify-content-between align-items-center">
+                    Export CSV <i class="bi bi-cloud-arrow-down-fill"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="card-title mb-0">Service Requests</h6>
+                        <h2 class="my-2 display-6 fw-bold">{{ total_requests }}</h2>
+                        <small>{{ pending_requests }} Pending</small>
+                    </div>
+                    <i class="bi bi-file-earmark-text fs-1 opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-white bg-opacity-10 border-0">
+                <a href="{% url 'export_requests' %}"
+                    class="text-white text-decoration-none d-flex justify-content-between align-items-center">
+                    Export CSV <i class="bi bi-cloud-arrow-down-fill"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="card-title mb-0">Total Assets</h6>
+                        <h2 class="my-2 display-6 fw-bold">{{ total_assets }}</h2>
+                        <small>In CMDB</small>
+                    </div>
+                    <i class="bi bi-laptop fs-1 opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-white bg-opacity-10 border-0">
+                <a href="{% url 'export_assets' %}"
+                    class="text-white text-decoration-none d-flex justify-content-between align-items-center">
+                    Export CSV <i class="bi bi-cloud-arrow-down-fill"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-dark text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="card-title mb-0">Monthly Report</h6>
+                        <p class="small my-2">Generate comprehensive monthly summary</p>
+                    </div>
+                </div>
+                <form action="{% url 'monthly_summary' %}" method="get" class="mt-2">
+                    <div class="input-group input-group-sm">
+                        <input type="month" name="month" class="form-control" value="{% now 'Y-m' %}">
+                        <button class="btn btn-light" type="submit">View</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header fw-bold">System Overview</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Module</th>
+                                <th>Total Records</th>
+                                <th>Active Items</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><i class="bi bi-exclamation-triangle text-danger me-2"></i> Incidents</td>
+                                <td>{{ total_incidents }}</td>
+                                <td>{{ open_incidents }}</td>
+                                <td><a href="{% url 'incident_list' %}" class="btn btn-sm btn-outline-primary">View
+                                        All</a></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-file-earmark-text text-success me-2"></i> Service Requests</td>
+                                <td>{{ total_requests }}</td>
+                                <td>{{ pending_requests }}</td>
+                                <td><a href="{% url 'request_list' %}" class="btn btn-sm btn-outline-primary">View
+                                        All</a></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-laptop text-info me-2"></i> Assets</td>
+                                <td>{{ total_assets }}</td>
+                                <td>-</td>
+                                <td><a href="{% url 'asset_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-people text-secondary me-2"></i> Departments</td>
+                                <td>{{ total_departments }}</td>
+                                <td>-</td>
+                                <td><a href="{% url 'department_list' %}" class="btn btn-sm btn-outline-primary">View
+                                        All</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

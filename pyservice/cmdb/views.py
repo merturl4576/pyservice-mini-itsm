@@ -31,6 +31,45 @@ def inventory_edit(request):
     inventory = AssetInventory.objects.all()
     
     if request.method == 'POST':
+        # Handle adding new custom item
+        if 'add_new_item' in request.POST:
+            new_item_name = request.POST.get('new_item_name', '').strip()
+            new_item_qty = request.POST.get('new_item_qty', '0')
+            if new_item_name:
+                # Create item_type from name (lowercase, underscores)
+                item_type_key = new_item_name.lower().replace(' ', '_')
+                try:
+                    new_qty = int(new_item_qty) if new_item_qty else 0
+                    if new_qty >= 0:
+                        # Check if already exists
+                        if AssetInventory.objects.filter(item_type=item_type_key).exists():
+                            messages.warning(request, f'Item "{new_item_name}" already exists.')
+                        else:
+                            AssetInventory.objects.create(
+                                item_type=item_type_key,
+                                display_name=new_item_name,
+                                quantity=new_qty
+                            )
+                            messages.success(request, f'New item "{new_item_name}" added successfully.')
+                except ValueError:
+                    messages.error(request, 'Invalid quantity value.')
+            else:
+                messages.error(request, 'Please enter an item name.')
+            return redirect('inventory_edit')
+        
+        # Handle deleting an item
+        if 'delete_item' in request.POST:
+            item_type_to_delete = request.POST.get('delete_item')
+            try:
+                item = AssetInventory.objects.get(item_type=item_type_to_delete)
+                item_name = item.get_display_name()
+                item.delete()
+                messages.success(request, f'Item "{item_name}" deleted successfully.')
+            except AssetInventory.DoesNotExist:
+                messages.error(request, 'Item not found.')
+            return redirect('inventory_edit')
+        
+        # Handle updating existing items
         for item in inventory:
             field_name = f'qty_{item.item_type}'
             if field_name in request.POST:
@@ -70,13 +109,8 @@ def asset_create(request):
             else:
                 asset.created_by = request.user
             
-            # "Other" type always needs admin review
-            if asset_type == 'other':
-                asset.status = 'under_review'
-                asset.save()
-                messages.warning(request, 'Asset created but needs admin approval (custom item type).')
             # Check inventory availability
-            elif AssetInventory.check_availability(asset_type):
+            if AssetInventory.check_availability(asset_type):
                 # Item in stock - decrement and assign
                 AssetInventory.decrement(asset_type)
                 asset.status = 'assigned'

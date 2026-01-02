@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ article.title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'kb_article_list' %}">Knowledge Base</a></li>
+<li class="breadcrumb-item active">{{ article.title|truncatechars:30 }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card mb-4">
+            <div class="card-body p-5">
+                <div class="mb-4">
+                    <span class="badge bg-primary mb-2">{{ article.category.name }}</span>
+                    {% if article.is_featured %}
+                    <span class="badge bg-warning text-dark mb-2">Featured</span>
+                    {% endif %}
+                    <h1 class="display-6 fw-bold mb-3">{{ article.title }}</h1>
+                    <div class="d-flex align-items-center text-muted small">
+                        <div class="me-4">
+                            <i class="bi bi-person-circle me-1"></i>
+                            {{ article.author.get_full_name|default:article.author.username }}
+                        </div>
+                        <div class="me-4">
+                            <i class="bi bi-calendar me-1"></i>
+                            Last updated: {{ article.updated_at|date:"F d, Y" }}
+                        </div>
+                        <div>
+                            <i class="bi bi-eye me-1"></i>
+                            {{ article.view_count }} views
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="article-content fs-5 lh-lg text-dark">
+                    {{ article.content|linebreaks }}
+                </div>
+            </div>
+
+            <div class="card-footer bg-light p-4 text-center">
+                <h6 class="mb-3">Was this article helpful?</h6>
+                <button class="btn btn-outline-success me-2" onclick="markHelpful({{ article.id }})" id="helpful-btn">
+                    <i class="bi bi-hand-thumbs-up me-1"></i> Yes
+                </button>
+                <span class="text-muted small ms-2" id="helpful-count">{{ article.helpful_count }} found this
+                    helpful</span>
+            </div>
+        </div>
+
+        {% if related %}
+        <h5 class="mb-3 ps-2">Related Articles</h5>
+        <div class="list-group mb-5">
+            {% for item in related %}
+            <a href="{% url 'kb_article_detail' item.slug %}" class="list-group-item list-group-item-action p-3">
+                <i class="bi bi-file-text me-2 text-muted"></i> {{ item.title }}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function markHelpful(id) {
+        const btn = document.getElementById('helpful-btn');
+        if (btn.classList.contains('disabled')) return;
+
+        fetch(`/knowledge/helpful/${id}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    btn.classList.add('disabled', 'active');
+                    btn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Thank you';
+                    document.getElementById('helpful-count').textContent = data.count + ' found this helpful';
+                }
+            });
+    }
+</script>
+{% endblock %}

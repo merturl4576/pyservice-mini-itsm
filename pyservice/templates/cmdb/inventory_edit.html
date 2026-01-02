@@ -8,27 +8,84 @@
 <div class="page-header">
     <h1 class="page-title">Edit Company Inventory</h1>
 </div>
-<div class="card">
+
+<!-- Add New Item Card -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <i class="bi bi-plus-circle me-2"></i>Add New Item
+    </div>
     <div class="card-body">
         <form method="post">
             {% csrf_token %}
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label">Item Name</label>
+                    <input type="text" name="new_item_name" class="form-control"
+                        placeholder="e.g., Keyboard, Headset, Webcam" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Initial Quantity</label>
+                    <input type="number" name="new_item_qty" class="form-control" value="0" min="0">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" name="add_new_item" class="btn btn-success w-100">
+                        <i class="bi bi-plus-lg me-1"></i>Add New Item
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Existing Inventory -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-box-seam me-2"></i>Current Inventory
+    </div>
+    <div class="card-body">
+        <form method="post" id="updateForm">
+            {% csrf_token %}
             <div class="row g-4">
                 {% for item in inventory %}
-                <div class="col-md-3 col-sm-6">
-                    <label class="form-label">{{ item.get_item_type_display }}</label>
-                    <input type="number" name="qty_{{ item.item_type }}" value="{{ item.quantity }}"
-                        class="form-control" min="0" required>
+                <div class="col-md-4 col-sm-6">
+                    <div class="border rounded p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0 fw-bold">{{ item.get_display_name }}</label>
+                            <button type="submit" form="deleteForm_{{ item.item_type }}"
+                                class="btn btn-sm btn-outline-danger" title="Delete Item"
+                                onclick="return confirm('Are you sure you want to delete {{ item.get_display_name }}?');">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                        <input type="number" name="qty_{{ item.item_type }}" value="{{ item.quantity }}"
+                            class="form-control" min="0" required>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    No inventory items yet. Add your first item above!
                 </div>
                 {% endfor %}
             </div>
+            {% if inventory %}
             <hr class="my-4">
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-lg me-1"></i> Update Inventory
+                    <i class="bi bi-check-lg me-1"></i>Update Inventory
                 </button>
                 <a href="{% url 'asset_list' %}" class="btn btn-outline-secondary">Cancel</a>
             </div>
+            {% endif %}
         </form>
+
+        <!-- Hidden delete forms -->
+        {% for item in inventory %}
+        <form method="post" id="deleteForm_{{ item.item_type }}" style="display: none;">
+            {% csrf_token %}
+            <input type="hidden" name="delete_item" value="{{ item.item_type }}">
+        </form>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

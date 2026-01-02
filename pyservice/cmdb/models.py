@@ -82,6 +82,7 @@ class User(AbstractUser):
 class AssetInventory(models.Model):
     """
     Company inventory - how many of each item type the company has.
+    Supports both predefined types and custom items.
     """
     ITEM_TYPE_CHOICES = [
         ('laptop', 'Laptop'),
@@ -91,10 +92,11 @@ class AssetInventory(models.Model):
         ('printer', 'Printer'),
         ('network', 'Network Equipment'),
         ('software', 'Software License'),
-        ('other', 'Other'),
+        ('custom', 'Custom Item'),
     ]
     
-    item_type = models.CharField(max_length=20, choices=ITEM_TYPE_CHOICES, unique=True)
+    item_type = models.CharField(max_length=50, unique=True)
+    display_name = models.CharField(max_length=100, blank=True)
     quantity = models.PositiveIntegerField(default=0)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -104,7 +106,16 @@ class AssetInventory(models.Model):
         verbose_name_plural = 'Asset Inventory'
     
     def __str__(self):
-        return f"{self.get_item_type_display()}: {self.quantity}"
+        return f"{self.get_display_name()}: {self.quantity}"
+    
+    def get_display_name(self):
+        """Get human-readable name for this item type."""
+        # Check if it's a predefined type
+        for code, name in self.ITEM_TYPE_CHOICES:
+            if code == self.item_type:
+                return name
+        # Otherwise use display_name or item_type
+        return self.display_name or self.item_type.replace('_', ' ').title()
     
     @classmethod
     def get_or_create_inventory(cls, item_type):
@@ -148,7 +159,6 @@ class Asset(models.Model):
         ('printer', 'Printer'),
         ('network', 'Network Equipment'),
         ('software', 'Software License'),
-        ('other', 'Other'),
     ]
 
     STATUS_CHOICES = [

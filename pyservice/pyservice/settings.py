@@ -44,6 +44,10 @@ INSTALLED_APPS = [
     'incidents',
     'service_requests',
     'api',
+    'notifications',
+    'knowledge',
+    'reports',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -68,6 +72,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'pyservice.context_processors.notifications_context',
             ],
         },
     },
@@ -148,3 +153,9 @@ REST_FRAMEWORK = {
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Email Configuration (Console backend for development)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@pyservice.local'
+EMAIL_SUBJECT_PREFIX = '[PyService] '

@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Monthly Summary Report{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'reports_dashboard' %}">Reports</a></li>
+<li class="breadcrumb-item active">Summary</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">IT Summary Report: {{ month_start|date:"F Y" }}</h2>
+    <button class="btn btn-outline-secondary" onclick="window.print()">
+        <i class="bi bi-printer me-2"></i> Print Report
+    </button>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card text-center h-100 border-primary border-2">
+            <div class="card-body py-4">
+                <div class="display-4 fw-bold text-primary mb-2">{{ incidents_created }}</div>
+                <div class="text-uppercase small fw-bold text-muted tracking-wide">New Incidents</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100 border-success border-2">
+            <div class="card-body py-4">
+                <div class="display-4 fw-bold text-success mb-2">{{ incidents_resolved }}</div>
+                <div class="text-uppercase small fw-bold text-muted tracking-wide">Incidents Resolved</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100 border-info border-2">
+            <div class="card-body py-4">
+                <div class="display-4 fw-bold text-info mb-2">{{ requests_completed }}</div>
+                <div class="text-uppercase small fw-bold text-muted tracking-wide">Requests Fulfilled</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100 border-warning border-2">
+            <div class="card-body py-4">
+                <div class="display-4 fw-bold text-warning mb-2">{{ sla_compliance }}%</div>
+                <div class="text-uppercase small fw-bold text-muted tracking-wide">SLA Compliance</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-light fw-bold text-uppercase">Performance Analysis</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Incident Management</h5>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Incidents Created
+                        <span class="badge bg-primary rounded-pill">{{ incidents_created }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total Incidents Resolved
+                        <span class="badge bg-success rounded-pill">{{ incidents_resolved }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        SLA Breaches
+                        <span class="badge bg-danger rounded-pill">{{ sla_breached }}</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h5>Service Requests</h5>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        New Requests Submitted
+                        <span class="badge bg-info rounded-pill">{{ requests_created }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Requests Completed
+                        <span class="badge bg-success rounded-pill">{{ requests_completed }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="text-center text-muted small mt-5">
+    Generated on {% now "F d, Y H:i" %} by PyService ITSM Platform
+</div>
+{% endblock %}

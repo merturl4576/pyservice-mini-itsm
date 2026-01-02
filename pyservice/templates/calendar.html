@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}ITSM Calendar{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Calendar</li>
+{% endblock %}
+
+{% block content %}
+<!-- Calendar Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm bg-dark">
+            <div class="card-body text-white py-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-2 text-white"><i class="bi bi-calendar3 me-2"></i>ITSM Calendar</h2>
+                        <p class="mb-0 text-light">View SLA deadlines, incident due dates, and service request timelines
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <span class="badge bg-danger fs-6 me-2">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Incidents
+                        </span>
+                        <span class="badge bg-primary fs-6">
+                            <i class="bi bi-file-earmark-text me-1"></i>Requests
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body py-2">
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <span class="fw-bold text-muted small">Priority Legend:</span>
+                    <span class="badge" style="background-color: #ef4444;">
+                        <i class="bi bi-circle-fill me-1"></i>Critical
+                    </span>
+                    <span class="badge" style="background-color: #f97316;">
+                        <i class="bi bi-circle-fill me-1"></i>High
+                    </span>
+                    <span class="badge" style="background-color: #eab308;">
+                        <i class="bi bi-circle-fill me-1"></i>Medium
+                    </span>
+                    <span class="badge" style="background-color: #22c55e;">
+                        <i class="bi bi-circle-fill me-1"></i>Low
+                    </span>
+                    <span class="badge" style="background-color: #3b82f6;">
+                        <i class="bi bi-file-earmark me-1"></i>Service Request
+                    </span>
+                    <span class="badge" style="background-color: #dc2626;">
+                        <i class="bi bi-exclamation-circle me-1"></i>SLA Breached
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Calendar -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <div id="calendar"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: '{% url "calendar_events" %}',
+            eventDidMount: function (info) {
+                // Tooltip logic can go here
+                info.el.title = info.event.title + '\n' + info.event.extendedProps.state;
+            },
+            height: 800,
+            themeSystem: 'bootstrap5'
+        });
+        calendar.render();
+    });
+</script>
+{% endblock %}

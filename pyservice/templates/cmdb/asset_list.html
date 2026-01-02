@@ -33,7 +33,7 @@
                     <h3
                         class="mb-1 {% if item.quantity == 0 %}text-danger{% elif item.quantity < 5 %}text-warning{% else %}text-success{% endif %}">
                         {{ item.quantity }}</h3>
-                    <small class="text-muted">{{ item.get_item_type_display }}</small>
+                    <small class="text-muted">{{ item.get_display_name }}</small>
                 </div>
             </div>
             {% empty %}

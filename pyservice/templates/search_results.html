@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Search: "{{ query }}"</li>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h3>Search Results for <span class="text-primary">"{{ query }}"</span></h3>
+    <p class="text-muted">{{ total_results }} results found</p>
+</div>
+
+<ul class="nav nav-tabs mb-4" id="searchTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="incidents-tab" data-bs-toggle="tab" data-bs-target="#incidents"
+            type="button" role="tab">
+            Incidents <span class="badge bg-secondary ms-1">{{ results.incidents|length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button"
+            role="tab">
+            Requests <span class="badge bg-secondary ms-1">{{ results.requests|length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="assets-tab" data-bs-toggle="tab" data-bs-target="#assets" type="button" role="tab">
+            Assets <span class="badge bg-secondary ms-1">{{ results.assets|length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="kb-tab" data-bs-toggle="tab" data-bs-target="#kb" type="button" role="tab">
+            Knowledge Base <span class="badge bg-secondary ms-1">{{ results.articles|length }}</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="searchTabsContent">
+    <!-- Incidents -->
+    <div class="tab-pane fade show active" id="incidents" role="tabpanel">
+        <div class="list-group">
+            {% for inc in results.incidents %}
+            <a href="{% url 'incident_detail' inc.pk %}" class="list-group-item list-group-item-action p-3">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ inc.number }}: {{ inc.title }}</h5>
+                    <small>{{ inc.created_at|date:"M d, Y" }}</small>
+                </div>
+                <p class="mb-1 text-muted">{{ inc.description|truncatechars:100 }}</p>
+                <small class="badge badge-status state-{{ inc.state }}">{{ inc.get_state_display }}</small>
+            </a>
+            {% empty %}
+            <div class="text-muted p-3">No incidents found.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Requests -->
+    <div class="tab-pane fade" id="requests" role="tabpanel">
+        <div class="list-group">
+            {% for req in results.requests %}
+            <a href="{% url 'request_detail' req.pk %}" class="list-group-item list-group-item-action p-3">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ req.number }}: {{ req.title }}</h5>
+                    <small>{{ req.created_at|date:"M d, Y" }}</small>
+                </div>
+                <p class="mb-1 text-muted">{{ req.description|truncatechars:100 }}</p>
+                <small class="badge bg-info">{{ req.get_state_display }}</small>
+            </a>
+            {% empty %}
+            <div class="text-muted p-3">No requests found.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Assets -->
+    <div class="tab-pane fade" id="assets" role="tabpanel">
+        <div class="list-group">
+            {% for asset in results.assets %}
+            <a href="{% url 'asset_detail' asset.pk %}" class="list-group-item list-group-item-action p-3">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ asset.name }}</h5>
+                    <small>{{ asset.get_status_display }}</small>
+                </div>
+                <p class="mb-1 text-muted">S/N: {{ asset.serial_number }} | Model: {{ asset.model_name }}</p>
+                <small class="text-muted">Assigned to: {{ asset.assigned_to|default:"None" }}</small>
+            </a>
+            {% empty %}
+            <div class="text-muted p-3">No assets found.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Knowledge Base -->
+    <div class="tab-pane fade" id="kb" role="tabpanel">
+        <div class="list-group">
+            {% for art in results.articles %}
+            <a href="{% url 'kb_article_detail' art.slug %}" class="list-group-item list-group-item-action p-3">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ art.title }}</h5>
+                    <small>{{ art.updated_at|date:"M d, Y" }}</small>
+                </div>
+                <p class="mb-1 text-muted">{{ art.summary }}</p>
+                <small class="text-muted"><i class="bi bi-folder"></i> {{ art.category.name }}</small>
+            </a>
+            {% empty %}
+            <div class="text-muted p-3">No articles found.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

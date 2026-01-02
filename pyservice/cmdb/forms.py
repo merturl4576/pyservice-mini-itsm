@@ -27,15 +27,15 @@ class AssetForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
             'asset_type': forms.Select(attrs={'class': 'form-select', 'required': True}),
             'serial_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Optional'}),
-            'model_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'manufacturer': forms.TextInput(attrs={'class': 'form-control'}),
+            'model_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Optional'}),
+            'manufacturer': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Optional'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
             'assigned_to': forms.Select(attrs={'class': 'form-select'}),
-            'purchase_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'purchase_cost': forms.NumberInput(attrs={'class': 'form-control'}),
-            'warranty_end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'location': forms.TextInput(attrs={'class': 'form-control'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'purchase_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'placeholder': 'Optional'}),
+            'purchase_cost': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Optional'}),
+            'warranty_end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'placeholder': 'Optional'}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Optional'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Optional'}),
         }
     
     def __init__(self, *args, **kwargs):

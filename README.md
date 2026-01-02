@@ -1,204 +1,180 @@
-# PyService - Mini-ITSM Platform
+# 🚀 PyService - Mini-ITSM Platform
 
-A simple IT Service Management (ITSM) platform built with Django, inspired by ServiceNow. This project helps organizations manage their IT assets, incidents, and service requests all in one place.
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![Django](https://img.shields.io/badge/Django-4.2-green.svg)](https://djangoproject.com)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple.svg)](https://getbootstrap.com)
 
-## 📋 What is This Project?
+A modern IT Service Management (ITSM) platform built with Django, inspired by ServiceNow. Manage IT assets, incidents, and service requests all in one place.
+
+## 📋 What is PyService?
 
 PyService is a web application that helps IT departments manage:
-- **Computer Assets** (laptops, monitors, phones, etc.)
-- **Incident Reports** (when something breaks or doesn't work)
-- **Service Requests** (when employees need new software or equipment)
 
-Think of it as a complete system for managing IT operations in a company.
+- **🖥️ Assets** - Track laptops, monitors, phones and equipment
+- **🔧 Incidents** - Report and fix IT problems with SLA tracking
+- **📝 Service Requests** - Request new software or equipment
+- **📚 Knowledge Base** - Self-service FAQ articles
+- **📅 Calendar** - View SLA deadlines and due dates
+- **📊 Dashboard** - Real-time charts and statistics
 
 ## ✨ Key Features
 
-### 1. CMDB (Asset Management)
-- Keep track of all company computers and equipment
-- See who is using which laptop or monitor
-- Check if equipment is available, in use, or needs repair
-- Automatically assign equipment to new employees
+### Dashboard with Analytics
+- Real-time incident and request statistics
+- Interactive Chart.js visualizations (pie, line, doughnut charts)
+- SLA compliance tracking
+- Staff performance leaderboard
 
-### 2. Incident Management
-- Employees can report IT problems
-- Support team can track and fix issues
-- **Smart Priority System**: Combines impact and urgency to prioritize work
-- **SLA Tracking**: Automatically calculates deadlines based on priority
-  - Critical issues: 4 hours to respond
-  - High priority: 24 hours
-  - Medium priority: 48 hours
-  - Low priority: 72 hours
+### Incident Management
+- Smart Priority System (Impact × Urgency = Priority)
+- Automatic SLA calculation:
+  - Critical: 4 hours
+  - High: 24 hours
+  - Medium: 48 hours
+  - Low: 72 hours
+- Claim, escalate, and resolve workflow
 
-### 3. Service Requests
-- Request new software or equipment
-- Automatic approval workflow
+### Service Request Workflow
+- Multi-step approval process
 - Manager approval required
-- Automatic assignment to IT team
+- Automatic asset assignment
+- Status tracking (Draft → Approval → Assigned → Completed)
 
-### 4. REST API
-- All data accessible via JSON API
+### Knowledge Base
+- Searchable FAQ articles
+- Categories with icons
+- Featured and popular articles
+- View count tracking
+
+### ITSM Calendar
+- Visual SLA deadline tracking
+- Color-coded priority display
+- Incident and request timeline
+
+### REST API
+- Full CRUD operations
+- JSON responses
+- Token authentication
 - Easy integration with other systems
-- Standard CRUD operations
 
 ## 🛠️ Technology Stack
 
-- **Backend**: Python 3.x + Django 4.2
-- **Database**: MySQL/MariaDB (XAMPP)
-- **API**: Django REST Framework
-- **Frontend**: Bootstrap 5 (clean, responsive design)
-- **Authentication**: Django built-in user system
+| Component | Technology |
+|-----------|------------|
+| Backend | Python 3.8+ / Django 4.2 |
+| Database | MySQL / MariaDB |
+| API | Django REST Framework |
+| Frontend | Bootstrap 5, Chart.js, FullCalendar |
+| Icons | Bootstrap Icons |
 
-## 📦 Installation
+## 📦 Quick Start
 
 ### Prerequisites
 
-Before you start, make sure you have:
-- Python 3.8 or higher installed
-- XAMPP (for MySQL database)
-- Git (optional, for version control)
+- Python 3.8 or higher
+- XAMPP (MySQL database)
+- Git
 
-### Step 1: Download the Project
+### Installation
 
 ```bash
-git clone https://github.com/merturl67/pyservice-mini-itsm.git
+# Clone the repository
+git clone https://github.com/merturl4576/pyservice-mini-itsm.git
 cd pyservice-mini-itsm
-```
 
-Or download the ZIP file and extract it.
-
-### Step 2: Create Virtual Environment
-
-```bash
 # Create virtual environment
 python -m venv env
+env\Scripts\activate  # Windows
+source env/bin/activate  # Mac/Linux
 
-# Activate it
-# On Windows:
-env\Scripts\activate
-# On Mac/Linux:
-source env/bin/activate
-```
-
-### Step 3: Install Dependencies
-
-```bash
+# Install dependencies
 cd pyservice
 pip install -r requirements.txt
-```
 
-### Step 4: Setup Database
+# Setup database (start XAMPP MySQL first)
+# Create database 'pyservice_db' in phpMyAdmin
 
-1. Start XAMPP and make sure MySQL is running
-2. Open phpMyAdmin (http://localhost/phpmyadmin)
-3. Create a new database called `pyservice_db`
-
-### Step 5: Run Migrations
-
-```bash
-python manage.py makemigrations
+# Run migrations
 python manage.py migrate
-```
 
-### Step 6: Create Admin User
-
-```bash
+# Create admin user
 python manage.py createsuperuser
-```
 
-Follow the prompts to create your admin account.
-
-### Step 7: Run the Server
-
-```bash
+# Start server
 python manage.py runserver
 ```
 
-Visit http://127.0.0.1:8000 in your browser!
+Visit **http://127.0.0.1:8000** in your browser!
+
+## 👥 User Roles
+
+| Role | Permissions |
+|------|-------------|
+| Staff | Report incidents, request services |
+| IT Support | Handle incidents, approve requests |
+| Technician | Technical repairs, maintenance |
+| Manager | Approve requests, view reports |
+| Administrator | Full system access |
 
 ## 📂 Project Structure
 
 ```
 pyservice/
-├── cmdb/                   # Asset management module
-│   ├── models.py          # Department, User, Asset models
-│   ├── views.py           # Asset management views
-│   └── forms.py           # Asset forms
-├── incidents/             # Incident management module
-│   ├── models.py          # Incident model with SLA logic
-│   ├── views.py           # Incident tracking views
-│   └── forms.py           # Incident forms
-├── service_requests/      # Service request module
-│   ├── models.py          # Service request workflow
-│   ├── views.py           # Request management views
-│   └── forms.py           # Request forms
-├── api/                   # REST API
-│   ├── serializers.py     # JSON serializers
-│   └── views.py           # API endpoints
-├── templates/             # HTML templates
-├── static/                # CSS, JavaScript, images
-├── pyservice/             # Main project settings
-│   ├── settings.py        # Configuration
-│   ├── urls.py            # URL routing
-│   └── dashboard.py       # Dashboard view
-├── manage.py              # Django management script
-└── requirements.txt       # Python dependencies
+├── cmdb/                   # Asset management
+├── incidents/              # Incident tracking
+├── service_requests/       # Service request workflow
+├── knowledge/              # Knowledge base articles
+├── notifications/          # User notifications
+├── api/                    # REST API endpoints
+├── templates/              # HTML templates
+│   ├── dashboard.html      # Main dashboard
+│   ├── calendar.html       # ITSM calendar
+│   └── knowledge/          # KB templates
+├── pyservice/
+│   ├── settings.py         # Configuration
+│   ├── dashboard.py        # Dashboard view
+│   ├── calendar_view.py    # Calendar view
+│   └── selfservice.py      # Self-service portal
+└── requirements.txt
 ```
-
-## 🎯 How to Use
-
-### For Regular Users (Employees)
-
-1. **Login** with your credentials
-2. **Report an Incident** if something isn't working
-3. **Request Equipment** or software through Service Requests
-4. **View Your Assets** to see what equipment you have
-
-### For IT Support Staff
-
-1. **View Dashboard** to see pending incidents and requests
-2. **Claim Incidents** to work on them
-3. **Approve Service Requests** for employees
-4. **Manage Assets** - assign, repair, or retire equipment
-
-### For Administrators
-
-1. **Access Admin Panel** at http://127.0.0.1:8000/admin
-2. **Manage Users and Departments**
-3. **View All Assets and Inventory**
-4. **Configure System Settings**
-
-## 🔑 Default User Roles
-
-The system has 5 user roles:
-- **Staff**: Regular employees who report issues and request services
-- **IT Support**: Handles incidents and service requests
-- **Technician**: Technical staff for repairs and maintenance
-- **Manager**: Approves service requests and budgets
-- **Administrator**: Full system access
 
 ## 🌐 API Endpoints
 
-Access the API at http://127.0.0.1:8000/api/
+```
+GET  /api/incidents/     - List incidents
+POST /api/incidents/     - Create incident
+GET  /api/assets/        - List assets
+POST /api/assets/        - Create asset
+GET  /api/requests/      - List service requests
+POST /api/requests/      - Create request
+```
 
-- `GET /api/incidents/` - List all incidents
-- `POST /api/incidents/` - Create new incident
-- `GET /api/assets/` - List all assets
-- `POST /api/assets/` - Create new asset
+## 🎯 Demo Credentials
 
-API requires authentication. Use your login credentials.
+Use these after running `python manage.py createsuperuser`:
 
-## 🤝 Contributing
+- **Admin Panel**: http://127.0.0.1:8000/admin
+- **Dashboard**: http://127.0.0.1:8000/dashboard
+- **Knowledge Base**: http://127.0.0.1:8000/knowledge
 
-This project was created as a portfolio demonstration of:
-- Django web development
-- Database design and ORM
-- ITIL service management principles
-- RESTful API design
-- Bootstrap frontend integration
+## 🔧 Configuration
+
+Copy `.env.example` to `.env` and configure:
+
+```env
+SECRET_KEY=your-secret-key
+DEBUG=True
+DB_NAME=pyservice_db
+DB_USER=root
+DB_PASSWORD=
+DB_HOST=localhost
+DB_PORT=3306
+```
 
 ## 📝 License
 
-This project is open source and available for educational purposes.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 👨‍💻 Author
 
@@ -207,8 +183,10 @@ This project is open source and available for educational purposes.
 
 ## 🙏 Acknowledgments
 
-This project was built following ITIL (Information Technology Infrastructure Library) best practices for IT service management. It demonstrates how to build a professional ITSM platform similar to enterprise solutions like ServiceNow.
+- Built following ITIL best practices
+- Inspired by ServiceNow platform
+- Uses Django, Bootstrap, and Chart.js
 
 ---
 
-**Note**: This is a demonstration project for educational purposes. For production use, please ensure proper security measures, including changing the SECRET_KEY in settings.py and using environment variables for sensitive data.
+⭐ **Star this repo if you find it useful!**

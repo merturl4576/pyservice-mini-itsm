@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Notifications</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">All Notifications</h5>
+                <form action="{% url 'notification_mark_all_read' %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Mark All Read</button>
+                </form>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for notif in notifications %}
+                <a href="{{ notif.link }}"
+                    class="list-group-item list-group-item-action p-4 {% if not notif.is_read %}bg-light border-start border-4 border-primary{% endif %}">
+                    <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                        <h6 class="mb-0 {% if not notif.is_read %}fw-bold text-primary{% endif %}">{{ notif.title }}
+                        </h6>
+                        <small class="text-muted">{{ notif.created_at|timesince }} ago</small>
+                    </div>
+                    <p class="mb-1 text-secondary">{{ notif.message }}</p>
+                    <small class="text-muted">Type: {{ notif.get_notification_type_display }}</small>
+                </a>
+                {% empty %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-bell-slash fs-1 d-block mb-3"></i>
+                    <p>You have no notifications.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
