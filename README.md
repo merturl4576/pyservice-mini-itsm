@@ -13,7 +13,7 @@ A production-ready IT Service Management (ITSM) platform built with Django, insp
 
 ## 🆕 What's New in v2.0
 
-- **🖥️ Remote Support Sessions** - Real-time remote assistance with AnyDesk integration, chat, and voice-to-text transcription inculuded Voice-to-Text Transcribe voice communications automatically
+- **🖥️ Remote Support Sessions** - Real-time remote assistance with AnyDesk integration, chat, and voice-to-text transcription 
 - **👥 Staff Performance Leaderboard** - Track and gamify IT support performance with monthly rankings
 - **📊 Enhanced Reports Dashboard** - Detailed analytics with remote session statistics
 - **🔔 Real-time Notifications** - WebSocket-based instant notifications
