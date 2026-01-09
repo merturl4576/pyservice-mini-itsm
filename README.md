@@ -140,6 +140,17 @@ python manage.py runserver
 # http://127.0.0.1:8000
 ```
 
+### 🔐 Demo Admin Account
+
+After installation, you can use the following demo admin account to log in:
+
+| Field | Value |
+|-------|-------|
+| **Username** | `admin` |
+| **Password** | `admin123` |
+
+> **Note:** For production use, please change these credentials immediately!
+
 ### Option 2: Using Docker (Production-ready)
 
 ```bash
