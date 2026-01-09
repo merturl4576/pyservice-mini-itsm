@@ -54,7 +54,7 @@
     <div class="card-header bg-light fw-bold text-uppercase">Performance Analysis</div>
     <div class="card-body">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <h5>Incident Management</h5>
                 <ul class="list-group list-group-flush mb-4">
                     <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -71,7 +71,7 @@
                     </li>
                 </ul>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <h5>Service Requests</h5>
                 <ul class="list-group list-group-flush mb-4">
                     <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -81,6 +81,19 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         Requests Completed
                         <span class="badge bg-success rounded-pill">{{ requests_completed }}</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5>Remote Support</h5>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Sessions Started
+                        <span class="badge bg-warning text-dark rounded-pill">{{ sessions_created }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Sessions Completed
+                        <span class="badge bg-secondary rounded-pill">{{ sessions_completed }}</span>
                     </li>
                 </ul>
             </div>

@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+
+{% block title %}Support Session{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+<li class="breadcrumb-item active">Support Session</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Session Info -->
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-{{ session.get_status_color }} text-white">
+                <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Session Info</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3 text-center">
+                    <small class="text-muted d-block">AnyDesk ID</small>
+                    <h2 class="font-monospace mb-0 text-primary">{{ session.anydesk_id }}</h2>
+                    <small class="text-muted">Use this ID to connect via AnyDesk</small>
+                </div>
+                <hr>
+                <dl class="row mb-0">
+                    <dt class="col-5">Status:</dt>
+                    <dd class="col-7"><span class="badge bg-{{ session.get_status_color }}">{{ session.get_status_display }}</span></dd>
+                    <dt class="col-5">Priority:</dt>
+                    <dd class="col-7"><span class="badge bg-{{ session.get_priority_color }}">{{ session.get_priority_display }}</span></dd>
+                    <dt class="col-5">Requester:</dt>
+                    <dd class="col-7">{{ session.requester.get_full_name|default:session.requester.username }}</dd>
+                    <dt class="col-5">Technician:</dt>
+                    <dd class="col-7">{% if session.technician %}{{ session.technician.get_full_name|default:session.technician.username }}{% else %}<span
+                            class="text-muted">Waiting...</span>{% endif %}</dd>
+                    <dt class="col-5">Created:</dt>
+                    <dd class="col-7">{{ session.created_at|date:"M d, H:i" }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-file-text me-2"></i>Issue Description</h6>
+            </div>
+            <div class="card-body">
+                <h6>{{ session.subject }}</h6>
+                <p class="text-muted mb-0">{{ session.description }}</p>
+            </div>
+        </div>
+
+        {% if is_technician and session.status == 'pending' %}
+        <form method="post" action="{% url 'accept_session' session.session_code %}" class="mb-3">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary w-100 btn-lg"><i class="bi bi-check-lg me-1"></i>Accept &
+                Connect via AnyDesk</button>
+        </form>
+        {% endif %}
+
+        {% if is_technician and session.status in 'accepted,in_progress' %}
+        <div class="card border-success mb-3">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="bi bi-check-circle me-2"></i>Complete Session</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'complete_session' session.session_code %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Session Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"
+                            placeholder="What was done to resolve the issue?"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100"><i class="bi bi-check-lg me-1"></i>Mark
+                        Complete</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Escalation Option -->
+        <div class="mb-3">
+            <form method="post" action="{% url 'escalate_session' session.session_code %}"
+                onsubmit="return confirm('Are you sure you want to escalate this session? It will be returned to the queue as URGENT.');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning w-100 text-dark"><i
+                        class="bi bi-exclamation-triangle me-1"></i>Need Advanced Help</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if session.status == 'pending' and not is_technician %}
+        <form method="post" action="{% url 'cancel_session' session.session_code %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger w-100"><i class="bi bi-x-lg me-1"></i>Cancel
+                Request</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Chat Section -->
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Live Chat</h6>
+                <div>
+                    <!-- Transcript Button -->
+                    <button type="button" class="btn btn-sm btn-outline-secondary me-2" data-bs-toggle="modal"
+                        id="btn-show-history" data-bs-target="#transcriptModal">
+                        <i class="bi bi-journal-text me-1"></i>Show Voice Chat
+                    </button>
+                    {% if session.status == 'pending' %}<span class="badge bg-warning">Waiting for technician...</span>
+                    {% elif session.status == 'completed' %}<span class="badge bg-success">Session
+                        Completed</span>{%endif %}
+                </div>
+            </div>
+            <div class="card-body d-flex flex-column" style="height: 500px;">
+                <div id="chat-messages" class="flex-grow-1 overflow-auto mb-3 p-3 bg-light rounded">
+                    {% for msg in chat_messages %}
+                    <div class="mb-2 {% if msg.sender == request.user %}text-end{% endif %}">
+                        <div class="d-inline-block p-2 rounded {% if msg.sender == request.user %}bg-primary text-white{% else %}bg-white border{% endif %}"
+                            style="max-width: 80%;">
+                            <small
+                                class="d-block {% if msg.sender == request.user %}text-white-50{% else %}text-muted{% endif %}">{{ msg.sender.get_full_name|default:msg.sender.username }} - {{ msg.created_at|time:"H:i" }}</small>
+                            {{ msg.message }}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-5" id="no-messages">
+                        <i class="bi bi-chat-dots fs-1 d-block mb-2"></i>
+                        {% if session.status == 'pending' %}Waiting for a technician to accept your request...{% else %}No messages yet. Start the conversation!{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if session.status in 'pending,accepted,in_progress' %}
+                <form id="chat-form" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <!-- Voice To Text Toggle -->
+                    <button type="button" class="btn btn-outline-secondary" id="btn-mic" title="Enable Voice-to-Text">
+                        <i class="bi bi-mic"></i>
+                    </button>
+
+                    <input type="text" class="form-control" id="message-input" placeholder="Type a message..."
+                        autocomplete="off" required>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i></button>
+                </form>
+                {% elif session.status == 'completed' %} <div class="alert alert-success mb-0"><i
+                        class="bi bi-check-circle me-2"></i>This session has been completed.{% if session.technician_notes %}
+                    <hr><strong>Technician Notes:</strong> {{ session.technician_notes }}{% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transcript Modal -->
+<div class="modal fade" id="transcriptModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-mic me-2"></i>Voice Conversation History</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light" style="max-height: 60vh; overflow-y: auto;">
+                <div id="transcript-container">
+                    <div class="text-center text-muted" id="transcript-loading">
+                        <div class="spinner-border spinner-border-sm me-2"></div>Loading transcript...
+                    </div>
+                    <div id="transcript-list"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- Existing Chat Logic ---
+        const chatMessages = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
+        // REFACTORED: Removed default filter to avoid syntax errors
+        let lastMessageId = {% if chat_messages and chat_messages.last %}{{ chat_messages.last.id }}{% else %}0{% endif %};
+
+    function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
+    scrollToBottom();
+
+    if (chatForm) {
+        chatForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (!message) return;
+            fetch('{% url "session_send_message" session.session_code %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: 'message=' + encodeURIComponent(message)
+            }).then(r => r.json()).then(data => {
+                if (data.success) { appendMessage(data.message); messageInput.value = ''; lastMessageId = data.message.id; }
+            });
+        });
+    }
+
+    function appendMessage(msg) {
+        const noMessages = document.getElementById('no-messages');
+        if (noMessages) noMessages.remove();
+        const div = document.createElement('div');
+        div.className = 'mb-2 ' + (msg.is_self ? 'text-end' : '');
+        div.innerHTML = '<div class="d-inline-block p-2 rounded ' + (msg.is_self ? 'bg-primary text-white' : 'bg-white border') + '" style="max-width: 80%;"><small class="d-block ' + (msg.is_self ? 'text-white-50' : 'text-muted') + '">' + msg.sender + ' - ' + msg.time + '</small>' + msg.message + '</div>';
+        chatMessages.appendChild(div);
+        scrollToBottom();
+    }
+
+    {% if session.status in 'pending,accepted,in_progress' %}
+    setInterval(function () {
+        fetch('{% url "session_get_messages" session.session_code %}?last_id=' + lastMessageId)
+            .then(r => r.json()).then(data => {
+                data.messages.forEach(msg => { if (!msg.is_self) { appendMessage(msg); } lastMessageId = Math.max(lastMessageId, msg.id); });
+                if (data.session_status !== '{{ session.status }}') { location.reload(); }
+
+                // Sync Mic Status (Visual only) for other users
+                updateMicVisuals(data.is_voice_active);
+            });
+    }, 2000);
+    {% endif %}
+
+    // --- Voice To Text Logic ---
+    const btnMic = document.getElementById('btn-mic');
+    const btnShowHistory = document.getElementById('btn-show-history');
+    const transcriptList = document.getElementById('transcript-list');
+    const transcriptLoading = document.getElementById('transcript-loading');
+    let recognition = null;
+    let isRecording = false;
+    // REFACTORED: Removed yesno filter to avoid syntax errors
+    let isServerVoiceActive = {% if session.is_voice_active %}true{% else %} false{% endif %};
+
+    function updateMicVisuals(isActive) {
+        if (!btnMic) return;
+        isServerVoiceActive = isActive;
+        // The button color reflects if *I* am recording OR if the Session is "Active"
+        // But functionally, I only show RED if *I* am recording.
+        // User requested: "Active" color.
+
+        // If server says active, we can show a badge or border.
+        // But the button itself should control LOCAL recording mainly.
+        // Let's make the button RED if *I* am recording.
+        // And maybe make it YELLOW/BLUE if Server is active but I am NOT?
+
+        if (isRecording) {
+            btnMic.classList.remove('btn-outline-secondary', 'btn-primary');
+            btnMic.classList.add('btn-danger', 'active');
+            btnMic.innerHTML = '<i class="bi bi-mic-fill"></i>';
+        } else if (isActive) {
+            btnMic.classList.remove('btn-outline-secondary', 'btn-danger');
+            btnMic.classList.add('btn-primary'); // "Join" color
+            btnMic.innerHTML = '<i class="bi bi-mic"></i>';
+        } else {
+            btnMic.classList.remove('btn-danger', 'btn-primary', 'active');
+            btnMic.classList.add('btn-outline-secondary');
+            btnMic.innerHTML = '<i class="bi bi-mic"></i>';
+        }
+    }
+
+    // Initial State
+    updateMicVisuals(isServerVoiceActive);
+
+    // Setup Web Speech API
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.lang = 'tr-TR'; // Default to Turkish as per prompt language (or en-US)
+
+        recognition.onstart = function () {
+            isRecording = true;
+            updateMicVisuals(isServerVoiceActive);
+            toggleServerVoiceState(true);
+        };
+
+        recognition.onend = function () {
+            // Auto-restart if it stopped but we didn't want it to
+            if (isRecording) {
+                try { recognition.start(); } catch (e) { isRecording = false; updateMicVisuals(isServerVoiceActive); toggleServerVoiceState(false); }
+            } else {
+                updateMicVisuals(isServerVoiceActive);
+                toggleServerVoiceState(false);
+            }
+        };
+
+        recognition.onerror = function (event) {
+            console.error('Speech error:', event.error);
+            if (event.error === 'not-allowed') {
+                alert('Microphone permission denied.');
+                isRecording = false;
+            }
+        };
+
+        recognition.onresult = function (event) {
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    const transcript = event.results[i][0].transcript;
+                    saveTranscript(transcript);
+                }
+            }
+        };
+
+        if (btnMic) {
+            btnMic.addEventListener('click', function () {
+                if (isRecording) {
+                    isRecording = false;
+                    recognition.stop();
+                    // toggleServerVoiceState(false); // Handled in onend
+                } else {
+                    recognition.start();
+                    // toggleServerVoiceState(true); // Handled in onstart
+                }
+            });
+        }
+
+    } else {
+        if (btnMic) {
+            btnMic.disabled = true;
+            btnMic.title = "Browser does not support Speech API";
+        }
+    }
+
+    function toggleServerVoiceState(active) {
+        fetch('{% url "toggle_voice" session.session_code %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: 'active=' + active
+        });
+    }
+
+    function saveTranscript(text) {
+        fetch('{% url "save_transcript" session.session_code %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: 'text=' + encodeURIComponent(text)
+        });
+    }
+
+    // Modal Events
+    const modal = document.getElementById('transcriptModal');
+    if (modal) {
+        modal.addEventListener('show.bs.modal', function () {
+            transcriptList.innerHTML = '';
+            transcriptLoading.style.display = 'block';
+
+            fetch('{% url "get_full_transcript" session.session_code %}')
+                .then(r => r.json())
+                .then(data => {
+                    transcriptLoading.style.display = 'none';
+                    if (data.transcripts.length === 0) {
+                        transcriptList.innerHTML = '<div class="text-center text-muted mt-3">No voice history recorded.</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    data.transcripts.forEach(t => {
+                        html += `
+                        <div class="mb-2">
+                            <small class="text-muted fw-bold">${t.speaker} <span class="fw-normal">at ${t.time}</span></small>
+                            <div class="p-2 border rounded bg-white">${t.text}</div>
+                        </div>
+                    `;
+                    });
+                    transcriptList.innerHTML = html;
+                });
+        });
+    }
+});
+</script>
+{% endblock %}

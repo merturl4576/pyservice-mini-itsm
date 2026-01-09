@@ -1,0 +1,86 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Request Remote Support{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+<li class="breadcrumb-item active">Request Support</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-headset me-2"></i>Request Remote Support</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>How it works:</strong> Submit your request with your AnyDesk ID. An IT technician will connect directly to your computer using AnyDesk.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="subject" name="subject" placeholder="Brief description of your issue" required maxlength="200">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="priority" class="form-label">Priority</label>
+                        <select class="form-select" id="priority" name="priority">
+                            <option value="low">Low - Can wait</option>
+                            <option value="medium" selected>Medium - Need help soon</option>
+                            <option value="high">High - Affecting my work</option>
+                            <option value="urgent">Urgent - Work completely blocked</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="anydesk_id" class="form-label">AnyDesk ID <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-lg font-monospace text-center" id="anydesk_id" name="anydesk_id" placeholder="123 456 789" required maxlength="50">
+                        <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Open AnyDesk on your computer and enter your AnyDesk ID shown in the app.</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Please describe your issue in detail. Include any error messages you've seen." required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="initial_message" class="form-label">Initial Message <small class="text-muted">(optional)</small></label>
+                        <textarea class="form-control" id="initial_message" name="initial_message" rows="2" placeholder="Type your first message to the technician (e.g. 'I am getting error X when I try to do Y')"></textarea>
+                        <small class="text-muted">This message will appear in the chat when a technician accepts your request.</small>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send me-1"></i>Submit Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>My Recent Sessions</h6></div>
+            <div class="list-group list-group-flush">
+                {% for session in user.support_requests.all|slice:":5" %}
+                <a href="{% url 'remote_session_room' session.session_code %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ session.subject|truncatechars:40 }}</strong>
+                        <br><small class="text-muted">{{ session.created_at|date:"M d, Y H:i" }}</small>
+                    </div>
+                    <span class="badge bg-{{ session.get_status_color }}">{{ session.get_status_display }}</span>
+                </a>
+                {% empty %}
+                <div class="list-group-item text-muted text-center py-3">No previous sessions</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

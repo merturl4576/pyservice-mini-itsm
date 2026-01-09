@@ -278,6 +278,7 @@ def staff_leaderboard(request):
     from django.contrib import messages
     from datetime import datetime
     from django.utils import timezone
+    from remote_support.models import RemoteSupportSession
     
     if request.user.role != 'admin':
         messages.error(request, 'Only administrators can access the leaderboard.')
@@ -317,6 +318,10 @@ def staff_leaderboard(request):
                 assigned_to=member,
                 state__in=['completed', 'fulfilled', 'closed']
             )
+            sessions_qs = RemoteSupportSession.objects.filter(
+                technician=member,
+                status='completed'
+            )
             
             # Apply month filter if specified
             if month_filter:
@@ -329,15 +334,21 @@ def staff_leaderboard(request):
                     updated_at__year=year,
                     updated_at__month=month
                 )
+                sessions_qs = sessions_qs.filter(
+                    completed_at__year=year,
+                    completed_at__month=month
+                )
             
             resolved_incidents = incidents_qs.count()
             completed_requests = requests_qs.count()
-            total = resolved_incidents + completed_requests
+            completed_sessions = sessions_qs.count()
+            total = resolved_incidents + completed_requests + completed_sessions
             
             leaderboard.append({
                 'user': member,
                 'resolved_incidents': resolved_incidents,
                 'completed_requests': completed_requests,
+                'completed_sessions': completed_sessions,
                 'total': total,
             })
         
@@ -390,12 +401,20 @@ def staff_leaderboard(request):
                 updated_at__gte=month_start,
                 updated_at__lt=month_end
             ).count()
+
+            sessions = RemoteSupportSession.objects.filter(
+                technician=staff,
+                status='completed',
+                completed_at__gte=month_start,
+                completed_at__lt=month_end
+            ).count()
             
-            total = incidents + requests
+            total = incidents + requests + sessions
             month_leaderboard.append({
                 'user': staff,
                 'incidents': incidents,
                 'requests': requests,
+                'sessions': sessions,
                 'total': total,
             })
         
@@ -425,6 +444,7 @@ def staff_detail(request, user_id):
     from cmdb.models import User
     from django.shortcuts import redirect, get_object_or_404
     from django.contrib import messages
+    from remote_support.models import RemoteSupportSession
     
     if request.user.role != 'admin':
         messages.error(request, 'Only administrators can access staff details.')
@@ -444,9 +464,15 @@ def staff_detail(request, user_id):
         state__in=['completed', 'fulfilled', 'closed']
     ).order_by('-updated_at')
     
+    # Get all completed sessions
+    completed_sessions = RemoteSupportSession.objects.filter(
+        technician=staff_member,
+        status='completed'
+    ).order_by('-completed_at')
+    
     # Calculate monthly stats
     from collections import defaultdict
-    monthly_stats = defaultdict(lambda: {'incidents': 0, 'requests': 0, 'total': 0})
+    monthly_stats = defaultdict(lambda: {'incidents': 0, 'requests': 0, 'sessions': 0, 'total': 0})
     
     for incident in resolved_incidents:
         month_key = incident.updated_at.strftime('%Y-%m')
@@ -457,6 +483,12 @@ def staff_detail(request, user_id):
         month_key = req.updated_at.strftime('%Y-%m')
         monthly_stats[month_key]['requests'] += 1
         monthly_stats[month_key]['total'] += 1
+        
+    for session in completed_sessions:
+        if session.completed_at:
+            month_key = session.completed_at.strftime('%Y-%m')
+            monthly_stats[month_key]['sessions'] += 1
+            monthly_stats[month_key]['total'] += 1
     
     # Sort monthly stats by date
     sorted_monthly = sorted(monthly_stats.items(), reverse=True)
@@ -465,10 +497,12 @@ def staff_detail(request, user_id):
         'staff_member': staff_member,
         'resolved_incidents': resolved_incidents,
         'completed_requests': completed_requests,
+        'completed_sessions': completed_sessions,
         'monthly_stats': sorted_monthly,
         'total_incidents': resolved_incidents.count(),
         'total_requests': completed_requests.count(),
-        'total_score': resolved_incidents.count() + completed_requests.count(),
+        'total_sessions': completed_sessions.count(),
+        'total_score': resolved_incidents.count() + completed_requests.count() + completed_sessions.count(),
     }
     
     return render(request, 'staff_detail.html', context)

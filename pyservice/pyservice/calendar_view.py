@@ -23,9 +23,16 @@ def calendar_page(request):
 def calendar_events_api(request):
     """API endpoint for calendar events (FullCalendar format)."""
     events = []
+    user = request.user
     
-    # Get incidents with due dates
-    incidents = Incident.objects.exclude(state__in=['resolved', 'closed']).filter(due_date__isnull=False)
+    # Get incidents with due dates - only show user's own incidents
+    # User can see incidents they created (caller) or are assigned to
+    from django.db.models import Q
+    incidents = Incident.objects.exclude(state__in=['resolved', 'closed']).filter(
+        due_date__isnull=False
+    ).filter(
+        Q(caller=user) | Q(assigned_to=user)
+    )
     
     for inc in incidents:
         # Color based on priority
@@ -56,8 +63,10 @@ def calendar_events_api(request):
             }
         })
     
-    # Get service requests (use expected completion if available)
-    requests = ServiceRequest.objects.exclude(state__in=['completed', 'fulfilled', 'closed'])
+    # Get service requests - only show user's own requests
+    requests = ServiceRequest.objects.exclude(
+        state__in=['completed', 'fulfilled', 'closed']
+    ).filter(requester=user)
     
     for req in requests:
         events.append({

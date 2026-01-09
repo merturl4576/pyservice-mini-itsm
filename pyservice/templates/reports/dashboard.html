@@ -72,6 +72,24 @@
     </div>
 
     <div class="col-md-6 col-lg-3">
+        <div class="card bg-warning text-dark h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="card-title mb-0">Remote Sessions</h6>
+                        <h2 class="my-2 display-6 fw-bold">{{ total_sessions }}</h2>
+                        <small>{{ pending_sessions }} Pending</small>
+                    </div>
+                    <i class="bi bi-headset fs-1 opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-white bg-opacity-25 border-0">
+                <span class="d-block py-1">Live Support</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
         <div class="card bg-dark text-white h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -119,6 +137,13 @@
                                 <td>{{ total_requests }}</td>
                                 <td>{{ pending_requests }}</td>
                                 <td><a href="{% url 'request_list' %}" class="btn btn-sm btn-outline-primary">View
+                                        All</a></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-headset text-warning me-2"></i> Remote Sessions</td>
+                                <td>{{ total_sessions }}</td>
+                                <td>{{ pending_sessions }}</td>
+                                <td><a href="{% url 'support_queue' %}" class="btn btn-sm btn-outline-primary">View
                                         All</a></td>
                             </tr>
                             <tr>

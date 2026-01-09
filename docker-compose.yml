@@ -1,0 +1,264 @@
+# =============================================================================
+# PyService Mini-ITSM Platform - Docker Compose Configuration
+# Orchestrates all services: Django, MySQL, Redis, Celery, Nginx
+# =============================================================================
+
+version: '3.9'
+
+services:
+  # ===========================================================================
+  # MySQL Database
+  # ===========================================================================
+  mysql:
+    image: mysql:8.0
+    container_name: pyservice_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-pyservice_db}
+      MYSQL_USER: ${DB_USER:-pyservice}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-pyservice_secret}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_secret}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "3307:3306"
+    networks:
+      - pyservice_network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_secret}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ===========================================================================
+  # Redis - Cache & Celery Broker
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: pyservice_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - pyservice_network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================================================
+  # Django Application
+  # ===========================================================================
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pyservice_django
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      - DEBUG=False
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
+      - ./pyservice:/app:ro # For development - remove in production
+    expose:
+      - "8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - pyservice_network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/health/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ===========================================================================
+  # Celery Worker - Background Tasks
+  # ===========================================================================
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pyservice_celery_worker
+    restart: unless-stopped
+    command: celery -A pyservice worker -l info --concurrency=4
+    env_file:
+      - .env.docker
+    environment:
+      - DEBUG=False
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    volumes:
+      - ./pyservice:/app:ro
+    depends_on:
+      django:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - pyservice_network
+
+  # ===========================================================================
+  # Celery Beat - Scheduled Tasks
+  # ===========================================================================
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pyservice_celery_beat
+    restart: unless-stopped
+    command: celery -A pyservice beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file:
+      - .env.docker
+    environment:
+      - DEBUG=False
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    volumes:
+      - ./pyservice:/app:ro
+    depends_on:
+      django:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - pyservice_network
+
+  # ===========================================================================
+  # Nginx - Reverse Proxy & Static Files
+  # ===========================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: pyservice_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/mediafiles:ro
+    depends_on:
+      django:
+        condition: service_healthy
+    networks:
+      - pyservice_network
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost/health/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===========================================================================
+  # Elasticsearch - Full-text Search (Optional)
+  # ===========================================================================
+  elasticsearch:
+    image: elasticsearch:8.11.0
+    container_name: pyservice_elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - pyservice_network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    profiles:
+      - full # Only starts with --profile full
+
+  # ===========================================================================
+  # Prometheus - Metrics (Optional)
+  # ===========================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: pyservice_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - pyservice_network
+    profiles:
+      - monitoring
+
+  # ===========================================================================
+  # Grafana - Dashboards (Optional)
+  # ===========================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: pyservice_grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - pyservice_network
+    profiles:
+      - monitoring
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  pyservice_network:
+    driver: bridge
+    name: pyservice_network
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  mysql_data:
+    name: pyservice_mysql_data
+  redis_data:
+    name: pyservice_redis_data
+  static_volume:
+    name: pyservice_static
+  media_volume:
+    name: pyservice_media
+  elasticsearch_data:
+    name: pyservice_elasticsearch
+  prometheus_data:
+    name: pyservice_prometheus
+  grafana_data:
+    name: pyservice_grafana

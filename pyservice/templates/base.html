@@ -403,7 +403,7 @@
             </li>
             <li class="sidebar-nav-item">
                 <a href="{% url 'request_list' %}"
-                    class="sidebar-nav-link {% if 'request' in request.resolver_match.url_name %}active{% endif %}">
+                    class="sidebar-nav-link {% if 'request' in request.resolver_match.url_name and 'support' not in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-file-earmark-text"></i> Service Requests
                 </a>
             </li>
@@ -411,6 +411,12 @@
                 <a href="{% url 'kb_article_list' %}"
                     class="sidebar-nav-link {% if 'knowledge' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-book"></i> Knowledge Base
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'request_support' %}"
+                    class="sidebar-nav-link {% if 'support' in request.resolver_match.url_name and 'queue' not in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-headset"></i> Remote Support
                 </a>
             </li>
 
@@ -458,6 +464,12 @@
                 <a href="{% url 'activity_log' %}"
                     class="sidebar-nav-link {% if 'activity' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-journal-text"></i> Activity Logs
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'support_queue' %}"
+                    class="sidebar-nav-link {% if 'queue' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-headset"></i> Support Queue
                 </a>
             </li>
             {% endif %}

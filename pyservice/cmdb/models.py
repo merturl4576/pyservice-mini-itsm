@@ -249,3 +249,28 @@ class Asset(models.Model):
             return True
         return False
 
+
+class TwoFactorDevice(models.Model):
+    """
+    Two-Factor Authentication Device.
+    Stores TOTP secret for 2FA verification.
+    """
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='two_factor_device'
+    )
+    secret = models.CharField(max_length=32)
+    is_verified = models.BooleanField(default=False)
+    backup_codes = models.TextField(blank=True)  # JSON array of backup codes
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = 'Two-Factor Device'
+        verbose_name_plural = 'Two-Factor Devices'
+    
+    def __str__(self):
+        status = 'Verified' if self.is_verified else 'Pending'
+        return f"2FA for {self.user.username} ({status})"
+

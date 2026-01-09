@@ -1,0 +1,51 @@
+# =============================================================================
+# PyService Mini-ITSM Platform - Prometheus Configuration
+# Metrics collection configuration
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'pyservice-monitor'
+
+# Alerting configuration (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Rule files (optional)
+rule_files: []
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # PyService Django application
+  - job_name: 'pyservice-django'
+    static_configs:
+      - targets: ['django:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+
+  # MySQL (requires mysqld_exporter)
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysql:9104']
+    scrape_interval: 30s
+
+  # Celery workers
+  - job_name: 'celery'
+    static_configs:
+      - targets: ['celery_worker:5555']
+    scrape_interval: 30s

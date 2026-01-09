@@ -1,16 +1,32 @@
 """
-ASGI config for pyservice project.
+ASGI Configuration
+PyService Mini-ITSM Platform
 
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
+ASGI config with Django Channels for WebSocket support.
 """
 
 import os
-
 from django.core.asgi import get_asgi_application
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
+from channels.security.websocket import AllowedHostsOriginValidator
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pyservice.settings')
 
-application = get_asgi_application()
+# Initialize Django ASGI application early
+django_asgi_app = get_asgi_application()
+
+# Import WebSocket URL patterns after Django setup
+from notifications.routing import websocket_urlpatterns
+
+application = ProtocolTypeRouter({
+    # HTTP requests are handled by Django's ASGI application
+    "http": django_asgi_app,
+    
+    # WebSocket connections with authentication
+    "websocket": AllowedHostsOriginValidator(
+        AuthMiddlewareStack(
+            URLRouter(websocket_urlpatterns)
+        )
+    ),
+})

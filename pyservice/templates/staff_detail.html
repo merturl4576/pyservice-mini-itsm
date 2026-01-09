@@ -27,7 +27,7 @@
 
 <!-- Summary Stats -->
 <div class="row g-4 mb-4">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="stat-card danger">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -38,7 +38,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="stat-card success">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -49,7 +49,18 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">{{ total_sessions }}</div>
+                    <div class="stat-label">Completed Sessions</div>
+                </div>
+                <i class="bi bi-headset stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
         <div class="stat-card primary">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -76,6 +87,7 @@
                         <th>Month</th>
                         <th class="text-center">Incidents</th>
                         <th class="text-center">Requests</th>
+                        <th class="text-center">Sessions</th>
                         <th class="text-center">Total</th>
                     </tr>
                 </thead>
@@ -85,6 +97,7 @@
                         <td><strong>{{ month }}</strong></td>
                         <td class="text-center"><span class="badge bg-danger">{{ stats.incidents }}</span></td>
                         <td class="text-center"><span class="badge bg-success">{{ stats.requests }}</span></td>
+                        <td class="text-center"><span class="badge bg-info">{{ stats.sessions }}</span></td>
                         <td class="text-center"><span class="badge bg-primary">{{ stats.total }}</span></td>
                     </tr>
                     {% endfor %}
@@ -97,8 +110,8 @@
 
 <div class="row g-4">
     <!-- Resolved Incidents -->
-    <div class="col-lg-6">
-        <div class="card">
+    <div class="col-lg-4">
+        <div class="card h-100">
             <div class="card-header bg-danger text-white">
                 <i class="bi bi-exclamation-triangle me-2"></i>Resolved Incidents ({{ total_incidents }})
             </div>
@@ -110,7 +123,7 @@
                             <tr>
                                 <th>Number</th>
                                 <th>Title</th>
-                                <th>Completed</th>
+                                <th>Date</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -121,9 +134,9 @@
                                         {{ incident.number }}
                                     </a>
                                 </td>
-                                <td>{{ incident.title|truncatechars:30 }}</td>
+                                <td>{{ incident.title|truncatechars:20 }}</td>
                                 <td>
-                                    <small class="text-muted">{{ incident.updated_at|date:"M d, Y H:i" }}</small>
+                                    <small class="text-muted">{{ incident.updated_at|date:"M d" }}</small>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -141,8 +154,8 @@
     </div>
 
     <!-- Completed Requests -->
-    <div class="col-lg-6">
-        <div class="card">
+    <div class="col-lg-4">
+        <div class="card h-100">
             <div class="card-header bg-success text-white">
                 <i class="bi bi-file-earmark-check me-2"></i>Completed Requests ({{ total_requests }})
             </div>
@@ -154,7 +167,7 @@
                             <tr>
                                 <th>Number</th>
                                 <th>Title</th>
-                                <th>Completed</th>
+                                <th>Date</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -165,9 +178,9 @@
                                         {{ req.number }}
                                     </a>
                                 </td>
-                                <td>{{ req.title|truncatechars:30 }}</td>
+                                <td>{{ req.title|truncatechars:20 }}</td>
                                 <td>
-                                    <small class="text-muted">{{ req.updated_at|date:"M d, Y H:i" }}</small>
+                                    <small class="text-muted">{{ req.updated_at|date:"M d" }}</small>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -178,6 +191,48 @@
                 <div class="text-center text-muted py-4">
                     <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                     No completed requests yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Sessions -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <i class="bi bi-headset me-2"></i>Completed Sessions ({{ total_sessions }})
+            </div>
+            <div class="card-body p-0">
+                {% if completed_sessions %}
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover mb-0">
+                        <thead class="sticky-top bg-white">
+                            <tr>
+                                <th>Code</th>
+                                <th>Subject</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in completed_sessions %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-light text-dark">{{ session.session_code }}</span>
+                                </td>
+                                <td>{{ session.subject|truncatechars:20 }}</td>
+                                <td>
+                                    <small class="text-muted">{{ session.completed_at|date:"M d" }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    No completed sessions yet.
                 </div>
                 {% endif %}
             </div>

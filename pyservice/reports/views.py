@@ -20,6 +20,7 @@ from cmdb.models import Asset, User, Department
 @login_required
 def reports_dashboard(request):
     """Main reports page."""
+    from remote_support.models import RemoteSupportSession
     if request.user.role not in ['admin', 'manager']:
         from django.contrib import messages
         from django.shortcuts import redirect
@@ -37,6 +38,8 @@ def reports_dashboard(request):
         'total_assets': Asset.objects.count(),
         'total_users': User.objects.count(),
         'total_departments': Department.objects.count(),
+        'total_sessions': RemoteSupportSession.objects.count(),
+        'pending_sessions': RemoteSupportSession.objects.filter(status='pending').count(),
     }
     
     return render(request, 'reports/dashboard.html', context)
@@ -135,6 +138,7 @@ def export_assets_csv(request):
 @login_required
 def monthly_summary(request):
     """Generate monthly summary report view."""
+    from remote_support.models import RemoteSupportSession
     if request.user.role not in ['admin', 'manager']:
         from django.contrib import messages
         from django.shortcuts import redirect
@@ -178,6 +182,17 @@ def monthly_summary(request):
         updated_at__lt=month_end
     ).count()
     
+    sessions_created = RemoteSupportSession.objects.filter(
+        created_at__gte=month_start,
+        created_at__lt=month_end
+    ).count()
+
+    sessions_completed = RemoteSupportSession.objects.filter(
+        status='completed',
+        completed_at__gte=month_start,
+        completed_at__lt=month_end
+    ).count()
+    
     # SLA compliance
     total_incidents_month = Incident.objects.filter(
         created_at__gte=month_start,
@@ -196,6 +211,8 @@ def monthly_summary(request):
         'incidents_resolved': incidents_resolved,
         'requests_created': requests_created,
         'requests_completed': requests_completed,
+        'sessions_created': sessions_created,
+        'sessions_completed': sessions_completed,
         'sla_compliance': sla_compliance,
         'sla_breached': sla_breached_month,
     }
